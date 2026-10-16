@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Cooperativa escolar</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧺</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --papel:#F3F5F2; --superficie:#FFFFFF; --tinta:#1B2420; --tenue:#56625C; --linea:#D5DBD6;
+  --libro:#1E5B4F; --sobre-libro:#FFFFFF; --libro-suave:#E2EDE9;
+  --captura:#FFE68A; --captura-borde:#D9B21F; --captura-tinta:#1B2420;
+  --ok:#256B42; --ok-suave:#DFF1E6; --alerta:#A8231B; --alerta-suave:#F9E2DF;
+  --info:#2F527F; --info-suave:#E3EAF4; --rayado:#C9CFCA;
+  --radio:10px; color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --papel:#111715; --superficie:#18201E; --tinta:#E6ECE9; --tenue:#9DA9A3; --linea:#2C3734;
+    --libro:#71C7B2; --sobre-libro:#0D1A16; --libro-suave:#1D312C;
+    --captura:#4D3F0A; --captura-borde:#C9A227; --captura-tinta:#FFF4CC;
+    --ok:#7AD39C; --ok-suave:#173024; --alerta:#F2958C; --alerta-suave:#3A1E1B;
+    --info:#9EBEF0; --info-suave:#1C283A; --rayado:#34403C; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --papel:#111715; --superficie:#18201E; --tinta:#E6ECE9; --tenue:#9DA9A3; --linea:#2C3734;
+  --libro:#71C7B2; --sobre-libro:#0D1A16; --libro-suave:#1D312C;
+  --captura:#4D3F0A; --captura-borde:#C9A227; --captura-tinta:#FFF4CC;
+  --ok:#7AD39C; --ok-suave:#173024; --alerta:#F2958C; --alerta-suave:#3A1E1B;
+  --info:#9EBEF0; --info-suave:#1C283A; --rayado:#34403C; color-scheme:dark;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--papel);color:var(--tinta);font:16px/1.5 "Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--libro)}
+h1,h2,h3{line-height:1.2;margin:0}
+h2{font-size:1.45rem}
+h3{font-size:1.1rem}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--info);outline-offset:2px}
+.num,td.n,th.n{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+
+/* Barra superior */
+.barra{background:var(--libro);color:var(--sobre-libro);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.marca{display:flex;flex-direction:column;min-width:0}
+.marca strong{font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.marca span{font-size:.82rem;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.usuario{background:transparent;border:1px solid currentColor;border-radius:999px;color:inherit;padding:4px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;max-width:45%}
+.usuario small{font-size:.72rem;opacity:.85}
+.usuario{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.9rem}
+.pestanas{display:flex;gap:4px;overflow-x:auto;padding:8px 12px 0;background:var(--superficie);border-bottom:1px solid var(--linea)}
+.pestanas button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 12px;cursor:pointer;color:var(--tenue);white-space:nowrap}
+.pestanas button[aria-current="page"]{color:var(--tinta);border-bottom-color:var(--libro);font-weight:700}
+main#vista{max-width:980px;margin:0 auto;padding:20px 16px 120px}
+section+section{margin-top:28px}
+
+/* Botones y campos */
+.btn{border:1px solid var(--linea);background:var(--superficie);border-radius:var(--radio);padding:10px 16px;cursor:pointer;font-weight:700}
+.btn.primario{background:var(--libro);border-color:var(--libro);color:var(--sobre-libro)}
+.btn.chico{padding:6px 10px;font-size:.9rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+label{display:block;font-size:.88rem;color:var(--tenue);margin-bottom:4px}
+.campo{width:100%;padding:10px 12px;border:1px solid var(--linea);border-radius:8px;background:var(--superficie)}
+.campo-captura{background:var(--captura);border:2px solid var(--captura-borde);color:var(--captura-tinta)}
+.campo:disabled,.campo-captura:disabled{background:var(--papel);border-color:var(--linea);color:var(--tenue)}
+.rejilla{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.acciones{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.nota{color:var(--tenue);font-size:.9rem}
+.aviso-caja{border-left:4px solid var(--info);background:var(--info-suave);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.aviso-caja.alerta{border-color:var(--alerta);background:var(--alerta-suave)}
+.aviso-caja.ok{border-color:var(--ok);background:var(--ok-suave)}
+.vacio{padding:40px 8px;text-align:center}
+.vacio p{color:var(--tenue);max-width:46ch;margin:8px auto 0}
+
+/* Estados */
+.estado{display:inline-block;font-style:normal;font-size:.76rem;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.e-pendiente{background:var(--papel);color:var(--tenue);border:1px solid var(--linea)}
+.e-entregado{background:var(--info-suave);color:var(--info)}
+.e-validado,.e-ok,.e-revisado{background:var(--ok-suave);color:var(--ok)}
+.e-revisar,.e-con-observaciones{background:var(--alerta-suave);color:var(--alerta)}
+.e-info{background:var(--info-suave);color:var(--info)}
+
+/* Captura */
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px}
+.chip{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:8px 12px;border-radius:var(--radio);border:1px solid var(--linea);background:var(--superficie);cursor:pointer;min-width:92px}
+.chip.activo{border:2px solid var(--libro);background:var(--libro-suave)}
+.chip:disabled{cursor:not-allowed;color:var(--tenue);background:repeating-linear-gradient(135deg,var(--superficie) 0 7px,var(--rayado) 7px 8px)}
+.chip small{font-size:.74rem;color:var(--tenue)}
+.encabezado-dia{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
+.encabezado-dia h2::first-letter{text-transform:uppercase}
+.renglones{border-top:1px solid var(--linea);margin-top:12px}
+.renglon{display:grid;grid-template-columns:1fr auto;grid-template-areas:"prod sub" "cont cont";gap:8px 12px;padding:14px 0;border-bottom:1px solid var(--linea);align-items:center}
+@media (min-width:640px){.renglon{grid-template-columns:1fr auto 120px;grid-template-areas:"prod cont sub"}}
+.prod{grid-area:prod}
+.prod strong{display:block}
+.prod span{font-size:.9rem;color:var(--tenue)}
+.contador{grid-area:cont;display:flex;align-items:center;gap:6px}
+.contador button{width:48px;height:48px;border-radius:var(--radio);border:1px solid var(--linea);background:var(--superficie);font-size:1.5rem;cursor:pointer;line-height:1}
+.contador button:disabled{opacity:.4;cursor:not-allowed}
+.contador input{width:96px;height:48px;text-align:center;font-size:1.35rem;font-weight:700;border-radius:8px;font-variant-numeric:tabular-nums}
+@media (max-width:639px){.contador input{flex:1}}
+.subtotal{grid-area:sub;text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.pie-captura{position:sticky;bottom:0;background:var(--superficie);border-top:2px solid var(--libro);margin:16px -16px 0;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));z-index:3}
+.total-dia{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.total-dia strong{font-size:1.8rem;font-variant-numeric:tabular-nums}
+
+/* Tablas tipo libro */
+.tabla-scroll{overflow-x:auto;border:1px solid var(--linea);border-radius:var(--radio);background:var(--superficie);margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{padding:8px 10px;border-bottom:1px solid var(--linea);text-align:left;vertical-align:top}
+thead th{background:var(--libro-suave);font-weight:700;position:sticky;top:0}
+tfoot td{font-weight:700;border-top:2px solid var(--libro);border-bottom:0}
+tbody tr:last-child td{border-bottom:0}
+td.sin-venta{background:repeating-linear-gradient(135deg,transparent 0 7px,var(--rayado) 7px 8px)}
+td.por-validar{background:var(--info-suave)}
+tr.clic{cursor:pointer}
+tr.clic:hover td{background:var(--libro-suave)}
+.cifras{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--linea);border:1px solid var(--linea);border-radius:var(--radio);overflow:hidden;margin-top:12px}
+.cifras div{background:var(--superficie);padding:12px 14px}
+.cifras span{display:block;font-size:.85rem;color:var(--tenue)}
+.cifras strong{font-size:1.25rem;font-variant-numeric:tabular-nums}
+.control{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:10px 0;border-bottom:1px solid var(--linea)}
+.control:last-child{border-bottom:0}
+.control .nota{grid-column:2}
+details.ajuste{background:var(--superficie);border:1px solid var(--linea);border-radius:var(--radio);padding:0 16px;margin-bottom:12px}
+details.ajuste>summary{cursor:pointer;padding:14px 0;font-weight:700;font-size:1.05rem}
+details.ajuste[open]>summary{border-bottom:1px solid var(--linea);margin-bottom:14px}
+details.ajuste>div{padding-bottom:16px}
+td .campo{min-width:110px;padding:6px 8px}
+.casillas{display:flex;flex-wrap:wrap;gap:8px 16px}
+.casillas label{display:flex;gap:6px;align-items:center;color:var(--tinta);margin:0}
+.pin-generado{font-size:1.6rem;letter-spacing:.15em;font-weight:700}
+
+/* Inicio de sesión */
+.login{min-height:100%;display:grid;place-items:center;padding:24px 16px}
+.tarjeta-login{width:100%;max-width:380px;background:var(--superficie);border-top:6px solid var(--libro);border-radius:var(--radio);padding:28px 24px}
+.tarjeta-login h1{font-size:1.6rem;margin-bottom:6px}
+.tarjeta-login form>div{margin-top:16px}
+.tarjeta-login .btn{width:100%;margin-top:20px;padding:12px}
+.error{color:var(--alerta);min-height:1.5em;margin:12px 0 0}
+
+/* Avisos y carga */
+#aviso{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:min(92vw,520px);z-index:20}
+#aviso div{background:var(--tinta);color:var(--papel);padding:12px 16px;border-radius:var(--radio);margin-top:8px}
+#aviso div.alerta{background:var(--alerta);color:#fff}
+#carga{position:fixed;top:env(safe-area-inset-top,0px);left:0;height:3px;width:0;background:var(--captura-borde);z-index:30;transition:width .3s}
+#carga.activo{width:70%;transition:width 4s ease-out}
+@media (prefers-reduced-motion:reduce){#carga,#carga.activo{transition:none}}
+@media print{.barra,.pestanas,.pie-captura,.acciones,#aviso{display:none}body{background:#fff}}
+</style>
+</head>
+<body>
+<div id="carga" aria-hidden="true"></div>
+<div id="app"></div>
+<div id="aviso" role="status" aria-live="polite"></div>
+<script src="config.js"></script>
+<script>
+"use strict";
+const API = window.COOP_API_URL || '';
+const S = { token: null, ses: null, ini: null, vista: '', semCal: null, fecha: null, dia: null, editMov: null };
+const ROL = { ADMIN: 'Administración', TESORERIA: 'Tesorería', VIGILANCIA: 'Comité de Vigilancia', DIRECCION: 'Dirección', PROVEEDOR: 'Proveedor' };
+const LECT = ['ADMIN', 'TESORERIA', 'VIGILANCIA', 'DIRECCION'];
+const VISTAS = {
+  inicio: { t: 'Controles', roles: LECT },
+  captura: { t: 'Captura de ventas', roles: ['PROVEEDOR', 'TESORERIA', 'ADMIN'] },
+  semana: { t: 'Semana', roles: LECT },
+  movimientos: { t: 'Movimientos', roles: LECT },
+  ajustes: { t: 'Ajustes', roles: ['ADMIN'] },
+  bitacora: { t: 'Bitácora', roles: ['ADMIN', 'VIGILANCIA', 'DIRECCION'] },
+  cuenta: { t: 'Mi cuenta', roles: LECT.concat('PROVEEDOR') }
+};
+const ESTADO = { PENDIENTE: 'Sin capturar', ENTREGADO: 'Entregado', VALIDADO: 'Validado' };
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const app = document.getElementById('app');
+
+/* ---------- utilidades ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const mx = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+const dinero = n => (n === null || n === undefined || n === '' || isNaN(n)) ? '—' : mx.format(Number(n));
+const entero = n => new Intl.NumberFormat('es-MX').format(Number(n) || 0);
+function partes(f) { const [a, m, d] = f.split('-').map(Number); return { a, m, d, dw: new Date(Date.UTC(a, m - 1, d)).getUTCDay() }; }
+const fLarga = f => { const p = partes(f); return `${DIAS[p.dw]} ${p.d} de ${MESES[p.m - 1]}`; };
+const fCorta = f => { const p = partes(f); return `${p.d} ${MESES[p.m - 1].slice(0, 3)}`; };
+function rango(s) {
+  const a = partes(s.lunes), b = partes(s.viernes);
+  return a.m === b.m ? `del ${a.d} al ${b.d} de ${MESES[b.m - 1]}` : `del ${a.d} de ${MESES[a.m - 1]} al ${b.d} de ${MESES[b.m - 1]}`;
+}
+const etiquetaSemana = s => `Semana ${s.numVenta || '(sin venta)'}, ${rango(s)}`;
+const estadoPill = (txt, clase) => `<em class="estado e-${esc(clase)}">${esc(txt)}</em>`;
+const vacio = (t, p) => `<div class="vacio"><h2>${esc(t)}</h2><p>${esc(p)}</p></div>`;
+
+function aviso(msg, tipo) {
+  const d = document.createElement('div');
+  if (tipo === 'alerta') d.className = 'alerta';
+  d.textContent = msg;
+  $('#aviso').appendChild(d);
+  setTimeout(() => d.remove(), tipo === 'alerta' ? 7000 : 4000);
+}
+let cargas = 0;
+function carga(on) { cargas += on ? 1 : -1; $('#carga').classList.toggle('activo', cargas > 0); }
+
+async function api(action, datos = {}) {
+  if (!/^https:\/\//.test(API)) throw new Error('Falta configurar la dirección del servidor en config.js.');
+  carga(true);
+  try {
+    const r = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ action, token: S.token }, datos))
+    });
+    let j;
+    try { j = await r.json(); } catch (e) { throw new Error('El servidor no respondió correctamente. Revise la URL en config.js y que la implementación esté publicada.'); }
+    if (!j.ok) {
+      if (j.codigo === 'SESION' && action !== 'login') { salir(true); }
+      throw new Error(j.error || 'Error desconocido.');
+    }
+    return j.data;
+  } catch (e) {
+    if (e instanceof TypeError) throw new Error('Sin conexión con el servidor. Revise su internet e intente de nuevo.');
+    throw e;
+  } finally { carga(false); }
+}
+
+function guardarSesion() { try { localStorage.setItem('coop_sesion', JSON.stringify({ token: S.token })); } catch (e) {} }
+function leerSesion() { try { return JSON.parse(localStorage.getItem('coop_sesion') || 'null'); } catch (e) { return null; } }
+function borrarSesion() { try { localStorage.removeItem('coop_sesion'); } catch (e) {} }
+
+async function salir(expirada) {
+  if (!expirada && S.token) { try { await api('salir'); } catch (e) {} }
+  S.token = null; S.ses = null; S.ini = null; S.fecha = null; S.semCal = null;
+  borrarSesion();
+  vLogin(expirada ? 'La sesión expiró. Vuelva a entrar.' : '');
+}
+
+/* ---------- arranque ---------- */
+async function iniciar() {
+  try {
+    S.ini = await api('inicio');
+    S.ses = S.ini.sesion;
+    const permitidas = Object.keys(VISTAS).filter(v => VISTAS[v].roles.includes(S.ses.rol));
+    if (!permitidas.includes(S.vista)) S.vista = S.ses.rol === 'PROVEEDOR' ? 'captura' : S.ses.rol === 'TESORERIA' ? 'captura' : 'inicio';
+    ir(S.vista);
+  } catch (e) {
+    if (S.token) vLogin(e.message);
+  }
+}
+
+function ir(v) {
+  S.vista = v;
+  const vistas = Object.keys(VISTAS).filter(k => k !== 'cuenta' && VISTAS[k].roles.includes(S.ses.rol));
+  app.innerHTML = `
+    <header class="barra">
+      <div class="marca"><strong>${esc(S.ini.cooperativa)}</strong><span>${esc(S.ini.escuela || 'Cooperativa escolar')}${S.ini.ciclo ? ', ciclo ' + esc(S.ini.ciclo) : ''}</span></div>
+      <button class="usuario" data-ir="cuenta" aria-label="Mi cuenta">${esc(S.ses.nombre)}<small>${esc(ROL[S.ses.rol])}</small></button>
+    </header>
+    ${vistas.length > 1 ? `<nav class="pestanas" aria-label="Secciones">${vistas.map(k => `<button data-ir="${k}" ${k === v ? 'aria-current="page"' : ''}>${VISTAS[k].t}</button>`).join('')}</nav>` : ''}
+    <main id="vista"></main>`;
+  const f = { inicio: vInicio, captura: vCaptura, semana: vSemana, movimientos: vMovimientos, ajustes: vAjustes, bitacora: vBitacora, cuenta: vCuenta }[v];
+  Promise.resolve(f()).catch(e => { $('#vista').innerHTML = vacio('No se pudo cargar esta sección', e.message); });
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-ir]');
+  if (b && S.ses) { e.preventDefault(); ir(b.dataset.ir); }
+});
+
+function semanaActual() {
+  const hoy = S.ini.hoy, ss = S.ini.semanas || [];
+  const conVenta = ss.filter(s => s.diasVenta > 0);
+  const en = conVenta.find(s => hoy >= s.lunes && hoy <= s.viernes);
+  if (en) return en.semCal;
+  const pasadas = conVenta.filter(s => s.lunes <= hoy);
+  if (pasadas.length) return pasadas[pasadas.length - 1].semCal;
+  return conVenta.length ? conVenta[0].semCal : null;
+}
+function selectorSemana(id) {
+  const ss = (S.ini.semanas || []).filter(s => s.diasVenta > 0);
+  return `<label for="${id}">Semana</label><select id="${id}" class="campo">${ss.map(s => `<option value="${s.semCal}" ${s.semCal === S.semCal ? 'selected' : ''}>${esc(etiquetaSemana(s))}</option>`).join('')}</select>`;
+}
+
+/* ---------- inicio de sesión ---------- */
+function vLogin(msg) {
+  app.innerHTML = `
+  <main class="login">
+    <div class="tarjeta-login">
+      <h1>Cooperativa escolar</h1>
+      <p class="nota">Entre con el usuario y el PIN que le dio la administración de la cooperativa.</p>
+      <form id="fLogin" novalidate>
+        <div><label for="lUsuario">Usuario</label><input id="lUsuario" class="campo" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+        <div><label for="lPin">PIN</label><input id="lPin" class="campo" type="password" inputmode="numeric" autocomplete="current-password" required></div>
+        <button class="btn primario" type="submit">Entrar</button>
+        <p class="error" id="eLogin">${esc(msg || '')}</p>
+      </form>
+    </div>
+  </main>`;
+  $('#lUsuario').focus();
+  $('#fLogin').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('#fLogin button'); btn.disabled = true; $('#eLogin').textContent = '';
+    try {
+      const r = await api('login', { usuario: $('#lUsuario').value, pin: $('#lPin').value });
+      S.token = r.token; S.ses = r.sesion; guardarSesion();
+      await iniciar();
+    } catch (err) { $('#eLogin').textContent = err.message; btn.disabled = false; }
+  });
+}
+
+/* ---------- captura de ventas ---------- */
+function vCaptura() {
+  const v = $('#vista');
+  const prov = S.ses.rol === 'PROVEEDOR';
+  if (!S.ini.calendarioListo) {
+    v.innerHTML = vacio('Todavía no hay calendario de ventas', 'La administración debe capturar el primer y el último día de ventas en Ajustes.');
+    return;
+  }
+  let selector = '';
+  if (prov) {
+    const dias = S.ini.dias || [];
+    if (!dias.length) {
+      v.innerHTML = vacio('No hay días abiertos para captura', S.ini.proximo ? 'El próximo día de venta es el ' + fLarga(S.ini.proximo) + '.' : 'El periodo de ventas del ciclo ya terminó.');
+      return;
+    }
+    if (!S.fecha || !dias.some(d => d.fecha === S.fecha)) S.fecha = dias[dias.length - 1].fecha;
+    selector = `<div class="chips">${dias.map(d => `
+      <button class="chip ${d.fecha === S.fecha ? 'activo' : ''}" data-fecha="${d.fecha}" aria-pressed="${d.fecha === S.fecha}">
+        <strong>${d.fecha === S.ini.hoy ? 'Hoy' : esc(d.nombre) + ' ' + fCorta(d.fecha)}</strong>
+        ${estadoPill(ESTADO[d.estado], d.estado.toLowerCase())}
+      </button>`).join('')}</div>`;
+  } else {
+    if (S.semCal == null) S.semCal = semanaActual();
+    const sem = S.ini.semanas.find(s => s.semCal === S.semCal);
+    if (!sem) { v.innerHTML = vacio('Sin semanas con venta', 'Revise el calendario en Ajustes.'); return; }
+    if (!S.fecha || !sem.dias.some(d => d.fecha === S.fecha && d.venta)) {
+      const ventas = sem.dias.filter(d => d.venta);
+      const pasados = ventas.filter(d => d.fecha <= S.ini.hoy);
+      S.fecha = (pasados.length ? pasados[pasados.length - 1] : ventas[0]).fecha;
+    }
+    selector = `<div style="margin-bottom:12px">${selectorSemana('sSemCap')}</div>
+      <div class="chips">${sem.dias.map(d => `
+        <button class="chip ${d.fecha === S.fecha ? 'activo' : ''}" data-fecha="${d.fecha}" ${d.venta ? '' : 'disabled'} title="${esc(d.motivo)}" aria-pressed="${d.fecha === S.fecha}">
+          <strong>${esc(d.nombre)} ${fCorta(d.fecha)}</strong><small>${d.venta ? (d.fecha === S.ini.hoy ? 'Hoy' : '&nbsp;') : esc(d.motivo)}</small>
+        </button>`).join('')}</div>`;
+  }
+  v.innerHTML = `<section>${selector}<div id="dia"><p class="nota">Cargando el día…</p></div></section>`;
+  $$('.chip[data-fecha]', v).forEach(b => b.addEventListener('click', () => { S.fecha = b.dataset.fecha; vCaptura(); }));
+  const sel = $('#sSemCap');
+  if (sel) sel.addEventListener('change', () => { S.semCal = Number(sel.value); S.fecha = null; vCaptura(); });
+  cargarDia();
+}
+
+async function cargarDia() {
+  const fecha = S.fecha;
+  try {
+    const d = await api('ventas.dia', { fecha });
+    if (fecha !== S.fecha || !$('#dia')) return;
+    S.dia = d; pintarDia(d);
+  } catch (e) { if ($('#dia')) $('#dia').innerHTML = `<div class="aviso-caja alerta">${esc(e.message)}</div>`; }
+}
+
+function pintarDia(d) {
+  const prov = S.ses.rol === 'PROVEEDOR';
+  const puede = !d.bloqueado && ['PROVEEDOR', 'TESORERIA', 'ADMIN'].includes(S.ses.rol);
+  const box = $('#dia');
+  const entrega = d.entregas && d.entregas[0];
+  let html = `
+    <div class="encabezado-dia">
+      <h2>${esc(fLarga(d.fecha))}</h2>
+      ${estadoPill(ESTADO[d.estado], d.estado.toLowerCase())}
+    </div>
+    <p class="nota">Semana de venta ${esc(d.semana.numVenta)}, ${esc(rango(d.semana))}. Precios vigentes desde el lunes de esta semana.</p>
+    ${d.bloqueado ? `<div class="aviso-caja">${esc(d.motivoBloqueo)}</div>` : ''}`;
+  if (!d.items.length) {
+    html += vacio('No hay productos para capturar', prov ? 'Pida a la administración que le asigne sus productos.' : 'Registre los productos y sus precios en Ajustes.');
+    box.innerHTML = html; return;
+  }
+  html += `<div class="renglones">${d.items.map(it => `
+    <div class="renglon">
+      <div class="prod"><strong>${esc(it.nombre)}</strong><span>${it.precio != null ? dinero(it.precio) + ' cada pieza' : 'Sin precio vigente'}</span></div>
+      <div class="contador">
+        <button type="button" data-paso="-1" aria-label="Restar una pieza de ${esc(it.nombre)}" ${puede ? '' : 'disabled'}>−</button>
+        <input class="campo-captura" type="number" inputmode="numeric" min="0" step="1" data-id="${esc(it.productoId)}" data-precio="${it.precio == null ? '' : it.precio}" value="${it.piezas == null ? '' : it.piezas}" placeholder="0" aria-label="Piezas vendidas de ${esc(it.nombre)}" ${puede ? '' : 'disabled'}>
+        <button type="button" data-paso="1" aria-label="Sumar una pieza de ${esc(it.nombre)}" ${puede ? '' : 'disabled'}>+</button>
+      </div>
+      <div class="subtotal" data-sub>${dinero(it.venta)}</div>
+    </div>`).join('')}</div>`;
+
+  if (!prov && d.entregas.length) {
+    html += `<div class="aviso-caja ${d.entregas.some(e => e.diferencia && Math.abs(e.diferencia) >= 0.01) ? 'alerta' : ''}">
+      ${d.entregas.map(e => `Entrega de <strong>${esc(e.usuario)}</strong>: total calculado ${dinero(e.totalCalculado)}, efectivo declarado ${e.efectivoEntregado == null ? 'sin capturar' : dinero(e.efectivoEntregado)}${e.diferencia ? ', diferencia ' + dinero(e.diferencia) : ''}.${e.observaciones ? ' Observaciones: ' + esc(e.observaciones) : ''}`).join('<br>')}
+    </div>`;
+  }
+
+  html += `<div class="pie-captura">
+    <div class="total-dia"><span>Total de ventas del día</span><strong id="totDia">${dinero(d.total)}</strong></div>
+    ${prov && puede ? `
+      <div class="rejilla" style="margin-top:12px">
+        <div><label for="cEfectivo">Efectivo que entrega</label><input id="cEfectivo" class="campo campo-captura" type="number" inputmode="decimal" min="0" step="0.5" value="${entrega && entrega.efectivoEntregado != null ? entrega.efectivoEntregado : ''}"></div>
+        <div><label for="cObs">Observaciones (opcional)</label><input id="cObs" class="campo" maxlength="500" value="${esc(entrega ? entrega.observaciones : '')}"></div>
+      </div>
+      <p class="nota" id="cDif"></p>` : ''}
+    ${puede ? `<div class="acciones">
+      <button class="btn primario" id="bGuardar">${prov ? 'Entregar ventas del día' : 'Guardar y validar'}</button>
+      ${!prov && d.estado === 'ENTREGADO' ? '<button class="btn" id="bValidar">Validar lo entregado sin cambios</button>' : ''}
+    </div>` : ''}
+  </div>`;
+  box.innerHTML = html;
+
+  const recalcular = () => {
+    let t = 0;
+    $$('.renglon', box).forEach(r => {
+      const inp = $('input', r);
+      const p = inp.dataset.precio === '' ? null : Number(inp.dataset.precio);
+      const n = inp.value === '' ? null : Number(inp.value);
+      const sub = (p != null && n != null) ? n * p : null;
+      if (sub) t += sub;
+      $('[data-sub]', r).textContent = dinero(sub);
+    });
+    $('#totDia').textContent = dinero(t);
+    const ef = $('#cEfectivo'), dif = $('#cDif');
+    if (ef && dif) {
+      if (ef.value === '') dif.textContent = '';
+      else {
+        const x = Math.round((Number(ef.value) - t) * 100) / 100;
+        dif.textContent = x === 0 ? 'El efectivo coincide con el total.' : (x > 0 ? 'Sobran ' : 'Faltan ') + dinero(Math.abs(x)) + ' respecto al total calculado.';
+      }
+    }
+    return t;
+  };
+  box.oninput = e => { if (e.target.matches('input')) recalcular(); };
+  $$('.contador button', box).forEach(b => b.addEventListener('click', () => {
+    const inp = $('input', b.parentElement);
+    inp.value = Math.max(0, (Number(inp.value) || 0) + Number(b.dataset.paso));
+    recalcular();
+  }));
+  recalcular();
+
+  const bG = $('#bGuardar');
+  if (bG) bG.addEventListener('click', async () => {
+    const entradas = $$('.renglon input', box);
+    const malos = entradas.filter(i => i.value !== '' && (!/^\d+$/.test(i.value) || Number(i.value) > 5000));
+    if (malos.length) { aviso('Revise las piezas: deben ser números enteros entre 0 y 5000.', 'alerta'); malos[0].focus(); return; }
+    const vacios = entradas.filter(i => i.value === '');
+    if (prov && vacios.length) { aviso('Falta capturar ' + vacios.length + ' producto(s). Si no se vendió, escriba 0.', 'alerta'); vacios[0].focus(); return; }
+    const total = recalcular();
+    if (prov && !confirm(`¿Entregar las ventas del ${fLarga(d.fecha)} por ${dinero(total)}?`)) return;
+    bG.disabled = true;
+    try {
+      const r = await api('ventas.guardar', {
+        fecha: d.fecha,
+        items: entradas.map(i => ({ productoId: i.dataset.id, piezas: i.value === '' ? null : Number(i.value) })),
+        efectivo: $('#cEfectivo') ? $('#cEfectivo').value : null,
+        observaciones: $('#cObs') ? $('#cObs').value : ''
+      });
+      aviso(prov ? 'Ventas entregadas.' : 'Ventas guardadas y validadas.');
+      if (prov) { const x = S.ini.dias.find(z => z.fecha === d.fecha); if (x) x.estado = r.estado; vCaptura(); }
+      else { S.dia = r; pintarDia(r); }
+    } catch (e) { aviso(e.message, 'alerta'); bG.disabled = false; }
+  });
+  const bV = $('#bValidar');
+  if (bV) bV.addEventListener('click', async () => {
+    bV.disabled = true;
+    try { const r = await api('ventas.validar', { fecha: d.fecha }); aviso('Día validado.'); pintarDia(r); }
+    catch (e) { aviso(e.message, 'alerta'); bV.disabled = false; }
+  });
+}
+
+/* ---------- controles (inicio) ---------- */
+async function vInicio() {
+  const v = $('#vista');
+  v.innerHTML = '<p class="nota">Calculando controles…</p>';
+  const r = await api('resumen');
+  const revisar = r.controles.filter(c => c.estado === 'REVISAR').length;
+  const conVenta = r.semanas.filter(s => s.diasVenta > 0 && s.transcurrida);
+  v.innerHTML = `
+    <section>
+      <h2>${revisar ? revisar + (revisar === 1 ? ' control por revisar' : ' controles por revisar') : 'Todos los controles en orden'}</h2>
+      <div class="cifras">
+        <div><span>Venta del ciclo</span><strong>${dinero(r.totales.venta)}</strong></div>
+        <div><span>Compra</span><strong>${dinero(r.totales.compra)}</strong></div>
+        <div><span>Utilidad</span><strong>${dinero(r.totales.utilidad)}</strong></div>
+        <div><span>Piezas vendidas</span><strong>${entero(r.totales.piezas)}</strong></div>
+      </div>
+      <div class="tabla-scroll" style="padding:4px 14px">
+        ${r.controles.map(c => `<div class="control">${estadoPill(c.estado === 'INFO' ? 'Aviso' : c.estado === 'OK' ? 'OK' : 'Revisar', c.estado.toLowerCase())}<strong>${esc(c.control)}</strong><span class="nota">${esc(c.detalle)}</span></div>`).join('')}
+      </div>
+    </section>
+    <section>
+      <h3>Ventas por semana</h3>
+      ${conVenta.length ? `<div class="tabla-scroll"><table>
+        <thead><tr><th>Semana</th><th class="n">Días</th><th class="n">Piezas</th><th class="n">Venta</th><th class="n">Compra</th><th class="n">Utilidad</th><th class="n">Gastos con tope</th><th>Vigilancia</th></tr></thead>
+        <tbody>${conVenta.map(s => `<tr class="clic" data-sem="${s.semCal}" tabindex="0">
+          <td>${esc(s.numVenta)}, ${esc(rango(s))}${s.porValidar.length ? ' ' + estadoPill('Por validar', 'entregado') : ''}</td>
+          <td class="n">${s.diasVenta}</td><td class="n">${entero(s.piezas)}</td><td class="n">${dinero(s.venta)}</td><td class="n">${dinero(s.compra)}</td><td class="n">${dinero(s.utilidad)}</td>
+          <td class="n">${dinero(s.gastosTope)} de ${dinero(s.tope)}${s.rebasaTope ? ' ' + estadoPill('Rebasa', 'revisar') : ''}</td>
+          <td>${s.revision ? estadoPill(s.revision.estado === 'REVISADO' ? 'Revisada' : 'Con observaciones', s.revision.estado === 'REVISADO' ? 'revisado' : 'con-observaciones') : (s.cerrada ? estadoPill('Pendiente', 'pendiente') : '')}</td>
+        </tr>`).join('')}</tbody></table></div>` : '<p class="nota">Todavía no transcurre ninguna semana de venta.</p>'}
+    </section>
+    <section>
+      <h3>Ventas por producto en el ciclo</h3>
+      ${r.productos.length ? `<div class="tabla-scroll"><table>
+        <thead><tr><th>Producto</th><th class="n">Piezas</th><th class="n">Venta</th><th class="n">Compra</th><th class="n">Utilidad</th><th class="n">% de la utilidad</th></tr></thead>
+        <tbody>${r.productos.map(p => `<tr><td>${esc(p.nombre)}</td><td class="n">${entero(p.piezas)}</td><td class="n">${dinero(p.venta)}</td><td class="n">${dinero(p.compra)}</td><td class="n">${dinero(p.utilidad)}</td><td class="n">${r.totales.utilidad ? (p.utilidad / r.totales.utilidad * 100).toFixed(1) + ' %' : '—'}</td></tr>`).join('')}</tbody>
+      </table></div>` : '<p class="nota">Sin ventas registradas.</p>'}
+    </section>`;
+  $$('tr[data-sem]', v).forEach(tr => {
+    const abrir = () => { S.semCal = Number(tr.dataset.sem); ir('semana'); };
+    tr.addEventListener('click', abrir);
+    tr.addEventListener('keydown', e => { if (e.key === 'Enter') abrir(); });
+  });
+}
+
+/* ---------- semana ---------- */
+async function vSemana() {
+  const v = $('#vista');
+  if (!S.ini.calendarioListo) { v.innerHTML = vacio('Todavía no hay calendario de ventas', 'La administración debe capturar las fechas del ciclo en Ajustes.'); return; }
+  if (S.semCal == null) S.semCal = semanaActual();
+  v.innerHTML = `<div style="max-width:520px">${selectorSemana('sSem')}</div><div id="semDet"><p class="nota">Cargando la semana…</p></div>`;
+  $('#sSem').addEventListener('change', e => { S.semCal = Number(e.target.value); vSemana(); });
+  const r = await api('ventas.semana', { semCal: S.semCal });
+  const s = r.semana, t = r.totales;
+  const puedeValidar = ['TESORERIA', 'ADMIN'].includes(S.ses.rol);
+  const puedeRevisar = ['VIGILANCIA', 'ADMIN'].includes(S.ses.rol);
+  const rev = t.revision;
+  $('#semDet').innerHTML = `
+    <section style="margin-top:20px">
+      <h2>${esc(etiquetaSemana(s))}</h2>
+      <div class="tabla-scroll"><table>
+        <thead><tr><th>Producto</th>${s.dias.map(d => `<th class="n" title="${esc(d.motivo)}">${esc(d.nombre)} ${partes(d.fecha).d}</th>`).join('')}<th class="n">Piezas</th><th class="n">Precio</th><th class="n">Costo</th><th class="n">Venta</th><th class="n">Compra</th><th class="n">Utilidad</th></tr></thead>
+        <tbody>${r.filas.map(f => `<tr><td>${esc(f.nombre)}</td>${f.dias.map((c, i) => {
+          const d = s.dias[i];
+          if (!d.venta) return `<td class="n sin-venta" title="${esc(d.motivo)}"></td>`;
+          return `<td class="n ${c && c.estado === 'ENTREGADO' ? 'por-validar' : ''}" ${c && c.estado === 'ENTREGADO' ? 'title="Entregado por el proveedor, sin validar"' : ''}>${c ? entero(c.piezas) : ''}</td>`;
+        }).join('')}<td class="n">${entero(f.piezas)}</td><td class="n">${dinero(f.precio)}</td><td class="n">${dinero(f.costo)}</td><td class="n">${dinero(f.venta)}</td><td class="n">${dinero(f.compra)}</td><td class="n">${dinero(f.utilidad)}</td></tr>`).join('')}</tbody>
+        <tfoot><tr><td>Totales</td>${s.dias.map(() => '<td></td>').join('')}<td class="n">${entero(t.piezas)}</td><td></td><td></td><td class="n">${dinero(t.venta)}</td><td class="n">${dinero(t.compra)}</td><td class="n">${dinero(t.utilidad)}</td></tr></tfoot>
+      </table></div>
+      <p class="nota">Las celdas rayadas son días sin venta según el calendario. Las sombreadas en azul son ventas entregadas por el proveedor que Tesorería aún no valida.</p>
+      <div class="cifras">
+        <div><span>Utilidad de la semana</span><strong>${dinero(t.utilidad)}</strong></div>
+        <div><span>Tope de gastos</span><strong>${dinero(t.tope)}</strong></div>
+        <div><span>Gastos sujetos al tope</span><strong>${dinero(t.gastosTope)}</strong></div>
+        <div><span>Estado del tope</span><strong>${t.rebasaTope ? estadoPill('Rebasado', 'revisar') : estadoPill('Dentro del tope', 'ok')}</strong></div>
+      </div>
+      ${t.porValidar.length ? `<div class="aviso-caja">Días entregados por el proveedor pendientes de validar: ${t.porValidar.map(f => `<strong>${esc(fLarga(f))}</strong>${puedeValidar ? ` <button class="btn chico" data-validar="${f}">Validar</button>` : ''}`).join(', ')}</div>` : ''}
+      ${t.sinCaptura.length ? `<div class="aviso-caja alerta">Días de venta sin captura: ${t.sinCaptura.map(f => esc(fLarga(f))).join(', ')}.</div>` : ''}
+    </section>
+    <section>
+      <h3>Entregas del proveedor</h3>
+      ${r.entregas.length ? `<div class="tabla-scroll"><table>
+        <thead><tr><th>Día</th><th>Usuario</th><th class="n">Total calculado</th><th class="n">Efectivo declarado</th><th class="n">Diferencia</th><th>Observaciones</th></tr></thead>
+        <tbody>${r.entregas.map(e => `<tr><td>${esc(fLarga(e.fecha))}</td><td>${esc(e.usuario)}</td><td class="n">${dinero(e.totalCalculado)}</td><td class="n">${dinero(e.efectivoEntregado)}</td><td class="n">${e.diferencia ? estadoPill(dinero(e.diferencia), 'revisar') : dinero(e.diferencia)}</td><td>${esc(e.observaciones)}</td></tr>`).join('')}</tbody>
+      </table></div>` : '<p class="nota">El proveedor no ha registrado entregas esta semana.</p>'}
+    </section>
+    <section>
+      <h3>Movimientos de la semana</h3>
+      ${r.movimientos.length ? `<div class="tabla-scroll"><table>
+        <thead><tr><th>Folio</th><th>Fecha</th><th>Concepto</th><th>Persona</th><th class="n">Importe</th><th>Tope</th></tr></thead>
+        <tbody>${r.movimientos.map(m => `<tr><td>${esc(m.folio)}</td><td>${esc(fCorta(m.fecha))}</td><td>${esc(m.concepto)}${m.descripcion ? '<br><span class="nota">' + esc(m.descripcion) + '</span>' : ''}</td><td>${esc(m.persona)}</td><td class="n">${m.tipo === 'EGRESO' ? '−' : ''}${dinero(m.importe)}</td><td>${m.sujetoTope ? 'Sí' : 'No'}</td></tr>`).join('')}</tbody>
+      </table></div>` : '<p class="nota">Sin movimientos esta semana.</p>'}
+    </section>
+    <section>
+      <h3>Revisión del Comité de Vigilancia</h3>
+      ${rev ? `<div class="aviso-caja ${rev.estado === 'REVISADO' ? 'ok' : 'alerta'}">${rev.estado === 'REVISADO' ? 'Revisada' : 'Con observaciones'} por ${esc(rev.revisadoPor)} el ${esc(rev.revisadoEn)}.${rev.observaciones ? '<br>' + esc(rev.observaciones) : ''}</div>` : `<p class="nota">${t.cerrada ? 'Semana cerrada, pendiente de revisión.' : 'La semana aún no termina.'}</p>`}
+      ${puedeRevisar ? `<div class="rejilla">
+        <div><label for="rEstado">Resultado</label><select id="rEstado" class="campo"><option value="REVISADO">Revisada sin observaciones</option><option value="CON OBSERVACIONES" ${rev && rev.estado === 'CON OBSERVACIONES' ? 'selected' : ''}>Con observaciones</option></select></div>
+        <div><label for="rObs">Observaciones</label><textarea id="rObs" class="campo" rows="2" maxlength="1000">${esc(rev ? rev.observaciones : '')}</textarea></div>
+      </div>
+      <div class="acciones"><button class="btn primario" id="bRev">Guardar revisión</button></div>` : ''}
+    </section>`;
+  $$('[data-validar]').forEach(b => b.addEventListener('click', async () => {
+    b.disabled = true;
+    try { await api('ventas.validar', { fecha: b.dataset.validar }); aviso('Día validado.'); vSemana(); }
+    catch (e) { aviso(e.message, 'alerta'); b.disabled = false; }
+  }));
+  const bR = $('#bRev');
+  if (bR) bR.addEventListener('click', async () => {
+    if ($('#rEstado').value === 'CON OBSERVACIONES' && !$('#rObs').value.trim()) { aviso('Escriba las observaciones.', 'alerta'); return; }
+    bR.disabled = true;
+    try { await api('revisiones.guardar', { semCal: S.semCal, estado: $('#rEstado').value, observaciones: $('#rObs').value }); aviso('Revisión guardada.'); vSemana(); }
+    catch (e) { aviso(e.message, 'alerta'); bR.disabled = false; }
+  });
+}
+
+/* ---------- movimientos ---------- */
+async function vMovimientos() {
+  const v = $('#vista');
+  const puede = ['TESORERIA', 'ADMIN'].includes(S.ses.rol);
+  const lista = await api('movimientos.listar');
+  const conceptos = S.ini.conceptos || [];
+  const m = S.editMov ? lista.find(x => x.folio === S.editMov) : null;
+  v.innerHTML = `
+    ${puede ? `<section>
+      <h2>${m ? 'Corregir ' + esc(m.folio) : 'Registrar movimiento'}</h2>
+      <p class="nota">Pasajes, basura, aportaciones, intereses y otros ingresos o gastos que no son ventas. El folio se asigna solo según la clasificación del concepto.</p>
+      ${conceptos.length ? `<div class="rejilla" style="margin-top:12px">
+        <div><label for="mFecha">Fecha</label><input id="mFecha" type="date" class="campo campo-captura" value="${esc(m ? m.fecha : S.ini.hoy)}"></div>
+        <div><label for="mConcepto">Concepto</label><select id="mConcepto" class="campo campo-captura">${conceptos.map(c => `<option ${m && m.concepto === c.concepto ? 'selected' : ''}>${esc(c.concepto)}</option>`).join('')}</select></div>
+        <div><label for="mImporte">Importe</label><input id="mImporte" type="number" inputmode="decimal" min="0" step="0.01" class="campo campo-captura" value="${m ? m.importe : ''}"></div>
+        <div><label for="mPersona">Quién recibe o hizo el encargo</label><input id="mPersona" class="campo campo-captura" value="${esc(m ? m.persona : '')}"></div>
+        <div><label for="mDesc">Descripción</label><input id="mDesc" class="campo campo-captura" maxlength="300" value="${esc(m ? m.descripcion : '')}"></div>
+        <div><label for="mComp">Comprobante</label><select id="mComp" class="campo campo-captura"><option>Recibo del sistema</option><option ${m && m.comprobante === 'Comprobante externo' ? 'selected' : ''}>Comprobante externo</option></select></div>
+      </div>
+      <p class="nota" id="mInfo"></p>
+      <div class="acciones"><button class="btn primario" id="bMov">${m ? 'Guardar corrección' : 'Registrar movimiento'}</button>${m ? '<button class="btn" id="bCancMov">Cancelar corrección</button>' : ''}</div>`
+      : '<div class="aviso-caja">No hay conceptos registrados. La administración debe darlos de alta en Ajustes.</div>'}
+    </section>` : ''}
+    <section>
+      <h3>Movimientos del ciclo</h3>
+      ${lista.length ? `<div class="tabla-scroll"><table>
+        <thead><tr><th>Folio</th><th>Fecha</th><th>Concepto</th><th>Persona</th><th class="n">Importe</th><th>Comprobante</th><th>Acta</th>${puede ? '<th></th>' : ''}</tr></thead>
+        <tbody>${lista.slice().reverse().map(x => `<tr><td>${esc(x.folio)}</td><td>${esc(fCorta(x.fecha))}</td><td>${esc(x.concepto)}${x.descripcion ? '<br><span class="nota">' + esc(x.descripcion) + '</span>' : ''}</td><td>${esc(x.persona)}</td><td class="n">${x.tipo === 'EGRESO' ? '−' : '+'}${dinero(x.importe)}</td><td>${esc(x.comprobante)}</td><td>${esc(x.requiereActa)}</td>${puede ? `<td><button class="btn chico" data-corregir="${esc(x.folio)}">Corregir</button></td>` : ''}</tr>`).join('')}</tbody>
+      </table></div>` : '<p class="nota">Todavía no hay movimientos registrados.</p>'}
+    </section>`;
+  const info = () => {
+    const c = conceptos.find(x => x.concepto === $('#mConcepto').value);
+    if (c) $('#mInfo').textContent = `${c.clasificacion}. ${c.sujetoTope ? 'Sujeto al tope semanal.' : 'No sujeto al tope.'} Acta: ${c.requiereActa}.${c.observacion ? ' ' + c.observacion : ''}`;
+  };
+  if ($('#mConcepto')) { $('#mConcepto').addEventListener('change', info); info(); }
+  $$('[data-corregir]', v).forEach(b => b.addEventListener('click', () => { S.editMov = b.dataset.corregir; vMovimientos(); window.scrollTo(0, 0); }));
+  const bc = $('#bCancMov'); if (bc) bc.addEventListener('click', () => { S.editMov = null; vMovimientos(); });
+  const bm = $('#bMov');
+  if (bm) bm.addEventListener('click', async () => {
+    bm.disabled = true;
+    try {
+      const r = await api('movimientos.guardar', {
+        folio: m ? m.folio : '', fecha: $('#mFecha').value, concepto: $('#mConcepto').value,
+        importe: $('#mImporte').value, persona: $('#mPersona').value, descripcion: $('#mDesc').value, comprobante: $('#mComp').value
+      });
+      aviso((m ? 'Corrección guardada: ' : 'Movimiento registrado con folio ') + r.folio + '.');
+      if (r.aviso) aviso(r.aviso, 'alerta');
+      S.editMov = null; vMovimientos();
+    } catch (e) { aviso(e.message, 'alerta'); bm.disabled = false; }
+  });
+}
+
+/* ---------- ajustes (administración) ---------- */
+async function vAjustes() {
+  const v = $('#vista');
+  v.innerHTML = '<p class="nota">Cargando ajustes…</p>';
+  const [c, us] = await Promise.all([api('config.obtener'), api('usuarios.listar')]);
+  pintarAjustes(c, us, '');
+}
+
+function pintarAjustes(c, us, abierto, pinNuevo) {
+  const v = $('#vista');
+  const nombreProd = id => (c.productos.find(p => p.id === id) || {}).nombre || id;
+  const tipoCampo = k => (k === 'primerDia' || k === 'ultimoDia') ? 'date' : (['socios', 'efectivoAnterior', 'diasOficiales', 'diasAtrasProveedor', 'topeSemanal'].includes(k) ? 'number' : 'text');
+  const op = (lista, sel) => lista.map(x => `<option ${x === sel ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  v.innerHTML = `
+    <h2 style="margin-bottom:14px">Ajustes del ciclo</h2>
+    <details class="ajuste" ${abierto === 'ciclo' || !abierto ? 'open' : ''}><summary>Datos del ciclo, firmantes y proveedor</summary><div>
+      <div class="rejilla">${c.claves.map(k => `<div><label for="k_${k.clave}">${esc(k.descripcion)}</label><input id="k_${k.clave}" data-clave="${k.clave}" type="${tipoCampo(k.clave)}" ${tipoCampo(k.clave) === 'number' ? 'step="any"' : ''} class="campo campo-captura" value="${esc(k.valor)}"></div>`).join('')}</div>
+      <div class="acciones"><button class="btn primario" id="bCfg">Guardar datos del ciclo</button></div>
+    </div></details>
+
+    <details class="ajuste" ${abierto === 'periodos' ? 'open' : ''}><summary>Periodos sin venta</summary><div>
+      <p class="nota">Festivos, CTE, registro de calificaciones y vacaciones. Para un solo día, use la misma fecha en Desde y Hasta.</p>
+      <div class="tabla-scroll"><table id="tPer"><thead><tr><th>Desde</th><th>Hasta</th><th>Motivo</th><th>Fuente</th><th></th></tr></thead>
+        <tbody>${c.periodos.map(p => filaPeriodo(p)).join('')}</tbody></table></div>
+      <div class="acciones"><button class="btn" id="bAddPer">Agregar periodo</button><button class="btn primario" id="bPer">Guardar periodos</button></div>
+    </div></details>
+
+    <details class="ajuste" ${abierto === 'productos' ? 'open' : ''}><summary>Productos</summary><div>
+      <p class="nota">El orden de la lista es el orden en que aparecen al capturar. Un producto que deja de venderse se desactiva; no se borra para conservar el historial.</p>
+      <div class="tabla-scroll"><table id="tProd"><thead><tr><th>Producto</th><th>Origen del costo</th><th>Activo</th></tr></thead>
+        <tbody>${c.productos.map(p => filaProducto(p)).join('')}</tbody></table></div>
+      <div class="acciones"><button class="btn" id="bAddProd">Agregar producto</button><button class="btn primario" id="bProd">Guardar productos</button></div>
+    </div></details>
+
+    <details class="ajuste" ${abierto === 'precios' ? 'open' : ''}><summary>Historial de precios</summary><div>
+      <p class="nota">Los precios nunca se sobrescriben. Cuando cambien, agregue un renglón con la fecha desde la que rigen. Cada semana usa el precio vigente en su lunes.</p>
+      ${c.productos.length ? `<div class="rejilla">
+        <div><label for="pProd">Producto</label><select id="pProd" class="campo campo-captura">${c.productos.map(p => `<option value="${esc(p.id)}">${esc(p.nombre)}</option>`).join('')}</select></div>
+        <div><label for="pDesde">Vigente desde</label><input id="pDesde" type="date" class="campo campo-captura"></div>
+        <div><label for="pPrecio">Precio de venta</label><input id="pPrecio" type="number" step="0.01" min="0" inputmode="decimal" class="campo campo-captura"></div>
+        <div><label for="pCosto">Costo unitario</label><input id="pCosto" type="number" step="0.01" min="0" inputmode="decimal" class="campo campo-captura"></div>
+        <div><label for="pFuente">Fuente u observación</label><input id="pFuente" class="campo"></div>
+      </div>
+      <div class="acciones"><button class="btn primario" id="bPrecio">Agregar precio</button></div>` : '<p class="nota">Registre primero los productos.</p>'}
+      ${c.precios.length ? `<div class="tabla-scroll"><table><thead><tr><th>Producto</th><th>Vigente desde</th><th class="n">Precio</th><th class="n">Costo</th><th>Fuente</th><th>Registró</th></tr></thead>
+        <tbody>${c.precios.slice().sort((a, b) => nombreProd(a.productoId).localeCompare(nombreProd(b.productoId)) || a.vigenteDesde.localeCompare(b.vigenteDesde)).map(p => `<tr><td>${esc(nombreProd(p.productoId))}</td><td>${esc(p.vigenteDesde)}</td><td class="n">${dinero(p.precio)}</td><td class="n">${dinero(p.costo)}</td><td>${esc(p.fuente)}</td><td>${esc(p.registradoPor)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    </div></details>
+
+    <details class="ajuste" ${abierto === 'conceptos' ? 'open' : ''}><summary>Conceptos de movimiento</summary><div>
+      <p class="nota">Verifique que coincidan con la hoja CATÁLOGOS de su plantilla. La clasificación define el folio: AC capital social, IB intereses, FR fondo de reserva, FS fondo social, GA gastos de administración.</p>
+      <div class="tabla-scroll"><table id="tConc"><thead><tr><th>Concepto</th><th>Clasificación</th><th>Sujeto al tope</th><th>Acta que lo respalda</th><th>Observación</th><th></th></tr></thead>
+        <tbody>${c.conceptos.map(x => filaConcepto(x, c)).join('')}</tbody></table></div>
+      <div class="acciones"><button class="btn" id="bAddConc">Agregar concepto</button><button class="btn primario" id="bConc">Guardar conceptos</button></div>
+    </div></details>
+
+    <details class="ajuste" ${abierto === 'usuarios' ? 'open' : ''}><summary>Usuarios y accesos</summary><div>
+      ${pinNuevo ? `<div class="aviso-caja ok">PIN de <strong>${esc(pinNuevo.usuario)}</strong>: <span class="pin-generado">${esc(pinNuevo.pin)}</span><br>Entréguelo en persona. No se volverá a mostrar.</div>` : ''}
+      <div class="tabla-scroll"><table><thead><tr><th>Usuario</th><th>Nombre</th><th>Perfil</th><th>Productos</th><th>Estado</th><th></th></tr></thead>
+        <tbody>${us.map(u => `<tr><td>${esc(u.usuario)}</td><td>${esc(u.nombre)}</td><td>${esc(ROL[u.rol] || u.rol)}</td><td>${u.rol === 'PROVEEDOR' ? (u.productos ? u.productos.split(',').map(nombreProd).map(esc).join(', ') : 'Todos') : ''}</td><td>${u.activo ? estadoPill('Activo', 'ok') : estadoPill('Inactivo', 'pendiente')}</td><td><button class="btn chico" data-editu="${esc(u.usuario)}">Editar</button></td></tr>`).join('')}</tbody></table></div>
+      <h3 style="margin-top:18px" id="uTitulo">Nuevo usuario</h3>
+      <div class="rejilla" style="margin-top:10px">
+        <div><label for="uUsuario">Usuario (sin espacios ni acentos)</label><input id="uUsuario" class="campo campo-captura" autocapitalize="none" spellcheck="false"></div>
+        <div><label for="uNombre">Nombre</label><input id="uNombre" class="campo campo-captura"></div>
+        <div><label for="uRol">Perfil</label><select id="uRol" class="campo campo-captura">${c.roles.map(r => `<option value="${r}">${esc(ROL[r])}</option>`).join('')}</select></div>
+        <div><label for="uPin">PIN (4 a 8 dígitos)</label><input id="uPin" class="campo" inputmode="numeric" placeholder="Vacío: se genera o se conserva"></div>
+      </div>
+      <div id="uProdBox" style="margin-top:12px" hidden>
+        <label>Productos que puede capturar este proveedor (ninguno marcado = todos)</label>
+        <div class="casillas">${c.productos.filter(p => p.activo).map(p => `<label><input type="checkbox" value="${esc(p.id)}" class="uProd"> ${esc(p.nombre)}</label>`).join('')}</div>
+      </div>
+      <div class="casillas" style="margin-top:12px"><label><input type="checkbox" id="uActivo" checked> Usuario activo</label></div>
+      <div class="acciones"><button class="btn primario" id="bUsr">Guardar usuario</button><button class="btn" id="bUsrNuevo">Limpiar formulario</button></div>
+      <p class="nota">Perfiles: Administración configura todo; Tesorería captura y valida ventas y registra movimientos; Comité de Vigilancia y Dirección consultan y la Vigilancia marca cada semana como revisada; Proveedor solo captura las ventas de sus productos en los días abiertos.</p>
+    </div></details>`;
+
+  const refrescar = async (abrir, nuevo, pin) => {
+    S.ini = await api('inicio');
+    const us2 = await api('usuarios.listar');
+    pintarAjustes(nuevo || c, us2, abrir, pin);
+  };
+  const conBoton = (id, fn) => { const b = $('#' + id); if (b) b.addEventListener('click', async () => { b.disabled = true; try { await fn(); } catch (e) { aviso(e.message, 'alerta'); b.disabled = false; } }); };
+
+  conBoton('bCfg', async () => {
+    const valores = {}; $$('[data-clave]').forEach(i => valores[i.dataset.clave] = i.value);
+    const r = await api('config.guardar', { valores }); aviso('Datos del ciclo guardados.'); await refrescar('ciclo', r);
+  });
+  $('#bAddPer').addEventListener('click', () => { $('#tPer tbody').insertAdjacentHTML('beforeend', filaPeriodo({})); });
+  $('#tPer').addEventListener('click', e => { const b = e.target.closest('[data-quitar]'); if (b) b.closest('tr').remove(); });
+  conBoton('bPer', async () => {
+    const periodos = $$('#tPer tbody tr').map(tr => ({ desde: $('[data-f=desde]', tr).value, hasta: $('[data-f=hasta]', tr).value, motivo: $('[data-f=motivo]', tr).value, fuente: $('[data-f=fuente]', tr).value })).filter(p => p.desde);
+    const r = await api('periodos.guardar', { periodos }); aviso('Periodos guardados. El calendario se actualizó.'); await refrescar('periodos', r);
+  });
+  $('#bAddProd').addEventListener('click', () => { $('#tProd tbody').insertAdjacentHTML('beforeend', filaProducto({ activo: true })); });
+  conBoton('bProd', async () => {
+    const productos = $$('#tProd tbody tr').map(tr => ({ id: tr.dataset.id || '', nombre: $('[data-f=nombre]', tr).value, origenCosto: $('[data-f=origen]', tr).value, activo: $('[data-f=activo]', tr).checked }));
+    const r = await api('productos.guardar', { productos }); aviso('Productos guardados.'); await refrescar('productos', r);
+  });
+  conBoton('bPrecio', async () => {
+    const r = await api('precios.agregar', { productoId: $('#pProd').value, vigenteDesde: $('#pDesde').value, precio: $('#pPrecio').value, costo: $('#pCosto').value, fuente: $('#pFuente').value });
+    aviso('Precio agregado al historial.'); await refrescar('precios', r);
+  });
+  $('#bAddConc').addEventListener('click', () => { $('#tConc tbody').insertAdjacentHTML('beforeend', filaConcepto({ sujetoTope: false, requiereActa: 'Sin acta' }, c)); });
+  $('#tConc').addEventListener('click', e => { const b = e.target.closest('[data-quitar]'); if (b) b.closest('tr').remove(); });
+  conBoton('bConc', async () => {
+    const conceptos = $$('#tConc tbody tr').map(tr => ({ concepto: $('[data-f=concepto]', tr).value, clasificacion: $('[data-f=clasif]', tr).value, sujetoTope: $('[data-f=tope]', tr).value, requiereActa: $('[data-f=acta]', tr).value, observacion: $('[data-f=obs]', tr).value }));
+    const r = await api('conceptos.guardar', { conceptos }); aviso('Conceptos guardados.'); await refrescar('conceptos', r);
+  });
+
+  const rolSel = $('#uRol');
+  const verProd = () => { $('#uProdBox').hidden = rolSel.value !== 'PROVEEDOR'; };
+  rolSel.addEventListener('change', verProd); verProd();
+  const limpiarU = () => {
+    $('#uTitulo').textContent = 'Nuevo usuario'; $('#uUsuario').value = ''; $('#uUsuario').disabled = false;
+    $('#uNombre').value = ''; $('#uPin').value = ''; rolSel.value = 'PROVEEDOR'; $('#uActivo').checked = true;
+    $$('.uProd').forEach(x => x.checked = false); verProd();
+  };
+  limpiarU();
+  $('#bUsrNuevo').addEventListener('click', limpiarU);
+  $$('[data-editu]').forEach(b => b.addEventListener('click', () => {
+    const u = us.find(x => x.usuario === b.dataset.editu);
+    $('#uTitulo').textContent = 'Editar ' + u.usuario; $('#uUsuario').value = u.usuario; $('#uUsuario').disabled = true;
+    $('#uNombre').value = u.nombre; rolSel.value = u.rol; $('#uActivo').checked = u.activo; $('#uPin').value = '';
+    const ids = u.productos ? u.productos.split(',') : [];
+    $$('.uProd').forEach(x => x.checked = ids.includes(x.value)); verProd();
+    $('#uUsuario').scrollIntoView({ block: 'center' });
+  }));
+  conBoton('bUsr', async () => {
+    const usuario = $('#uUsuario').value;
+    const r = await api('usuarios.guardar', {
+      usuario, nombre: $('#uNombre').value, rol: rolSel.value, pin: $('#uPin').value,
+      activo: $('#uActivo').checked, productos: $$('.uProd').filter(x => x.checked).map(x => x.value)
+    });
+    aviso('Usuario guardado.');
+    pintarAjustes(c, r.usuarios, 'usuarios', r.pinGenerado ? { usuario: usuario.trim().toLowerCase(), pin: r.pinGenerado } : null);
+  });
+}
+
+function filaPeriodo(p) {
+  return `<tr><td><input type="date" class="campo campo-captura" data-f="desde" value="${esc(p.desde || '')}"></td><td><input type="date" class="campo campo-captura" data-f="hasta" value="${esc(p.hasta || '')}"></td><td><input class="campo campo-captura" data-f="motivo" value="${esc(p.motivo || '')}"></td><td><input class="campo" data-f="fuente" value="${esc(p.fuente || '')}"></td><td><button class="btn chico" data-quitar aria-label="Quitar periodo">Quitar</button></td></tr>`;
+}
+function filaProducto(p) {
+  return `<tr data-id="${esc(p.id || '')}"><td><input class="campo campo-captura" data-f="nombre" value="${esc(p.nombre || '')}"></td><td><input class="campo" data-f="origen" value="${esc(p.origenCosto || '')}"></td><td><input type="checkbox" data-f="activo" ${p.activo ? 'checked' : ''} aria-label="Producto activo"></td></tr>`;
+}
+function filaConcepto(x, c) {
+  const op = (lista, sel) => lista.map(v => `<option ${v === sel ? 'selected' : ''}>${esc(v)}</option>`).join('');
+  return `<tr><td><input class="campo campo-captura" data-f="concepto" value="${esc(x.concepto || '')}"></td>
+    <td><select class="campo campo-captura" data-f="clasif"><option value="">Elija…</option>${op(c.clasificaciones, x.clasificacion)}</select></td>
+    <td><select class="campo campo-captura" data-f="tope">${op(['No', 'Sí'], x.sujetoTope ? 'Sí' : 'No')}</select></td>
+    <td><select class="campo campo-captura" data-f="acta">${op(c.opcionesActa, x.requiereActa)}</select></td>
+    <td><input class="campo" data-f="obs" value="${esc(x.observacion || '')}"></td>
+    <td><button class="btn chico" data-quitar aria-label="Quitar concepto">Quitar</button></td></tr>`;
+}
+
+/* ---------- bitácora ---------- */
+async function vBitacora() {
+  const v = $('#vista');
+  v.innerHTML = '<p class="nota">Cargando bitácora…</p>';
+  const b = await api('bitacora');
+  v.innerHTML = `<h2>Bitácora de cambios</h2>
+    <p class="nota">Cada captura, validación, corrección y ajuste queda registrado con usuario, fecha y hora. Se muestran los 400 más recientes; el registro completo está en la hoja BITACORA.</p>
+    ${b.length ? `<div class="tabla-scroll"><table><thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Acción</th><th>Detalle</th></tr></thead>
+    <tbody>${b.map(x => `<tr><td class="num" style="text-align:left">${esc(x.fechaHora)}</td><td>${esc(x.usuario)}<br><span class="nota">${esc(ROL[x.rol] || x.rol)}</span></td><td>${esc(x.accion)}</td><td>${esc(x.detalle)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="nota">Sin registros.</p>'}`;
+}
+
+/* ---------- mi cuenta ---------- */
+function vCuenta() {
+  const v = $('#vista');
+  v.innerHTML = `
+    <section style="max-width:520px">
+      <h2>${esc(S.ses.nombre)}</h2>
+      <p class="nota">Usuario ${esc(S.ses.usuario)}, perfil ${esc(ROL[S.ses.rol])}.</p>
+      ${S.ses.rol === 'PROVEEDOR' ? '<div class="acciones"><button class="btn" data-ir="captura">Volver a la captura</button></div>' : ''}
+      <h3 style="margin-top:24px">Cambiar PIN</h3>
+      <div class="rejilla" style="margin-top:10px">
+        <div><label for="pinA">PIN actual</label><input id="pinA" type="password" inputmode="numeric" class="campo" autocomplete="current-password"></div>
+        <div><label for="pinN">PIN nuevo (4 a 8 dígitos)</label><input id="pinN" type="password" inputmode="numeric" class="campo" autocomplete="new-password"></div>
+      </div>
+      <div class="acciones"><button class="btn primario" id="bPin">Cambiar PIN</button><button class="btn" id="bSalir">Salir</button></div>
+    </section>`;
+  $('#bSalir').addEventListener('click', () => salir(false));
+  $('#bPin').addEventListener('click', async () => {
+    try { await api('pin.cambiar', { actual: $('#pinA').value, nuevo: $('#pinN').value }); aviso('PIN cambiado.'); $('#pinA').value = ''; $('#pinN').value = ''; }
+    catch (e) { aviso(e.message, 'alerta'); }
+  });
+}
+
+/* ---------- inicio ---------- */
+(function () {
+  const g = leerSesion();
+  if (g && g.token) { S.token = g.token; app.innerHTML = '<div class="vacio"><p>Abriendo la cooperativa…</p></div>'; iniciar(); }
+  else vLogin('');
+})();
+</script>
+</body>
+</html>
