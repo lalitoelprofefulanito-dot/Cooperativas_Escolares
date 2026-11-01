@@ -1,0 +1,1994 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Control de Cooperativas Escolares</title>
+  <meta name="description" content="Captura, cálculos, controles y documentos de la cooperativa escolar de consumo. Los datos se guardan solo en este navegador.">
+  <style>
+/* estilos.css — Interfaz de la app. Código de colores del Excel: amarillo = captura;
+   verde / rojo = estado de los controles; los datos calculados se ven como texto, sin cuadro. */
+:root {
+  --fondo: #f4f5f2;
+  --superficie: #ffffff;
+  --texto: #1d2420;
+  --texto-suave: #55605a;
+  --borde: #c9cfca;
+  --acento: #1f5f4a;
+  --acento-texto: #ffffff;
+  --captura: #fff4cc;          /* amarillo de las celdas de captura del Excel */
+  --captura-borde: #c9a93a;
+  --propuesto: #7a7a7a;        /* valor propuesto, en gris */
+  --ok-fondo: #c6efce; --ok-texto: #0b5a1c;
+  --mal-fondo: #ffc7ce; --mal-texto: #9c0006;
+  --pend-fondo: #ffeb9c; --pend-texto: #7a5300;
+  --info-fondo: #dde8f3; --info-texto: #1f4e79;
+  --aviso: #c55a11;            /* naranja: dato fuera de la regla del Excel */
+  --error: #b00020;
+  --g-control: #c00000; --g-captura: #b37200; --g-actas: #0f6e6a; --g-contab: #006600;
+  --g-docs: #1f4e79; --g-consulta: #6b6b6b; --g-exp: #444;
+  --radio: 6px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  color: var(--texto);
+  background: var(--fondo);
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--fondo); line-height: 1.45; }
+.vh { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+a { color: var(--acento); }
+:focus-visible { outline: 3px solid #2a7ab8; outline-offset: 2px; }
+button, .boton-archivo {
+  font: inherit; padding: 6px 12px; border: 1px solid var(--borde); border-radius: var(--radio);
+  background: var(--superficie); color: var(--texto); cursor: pointer; min-height: 34px;
+}
+button:hover, .boton-archivo:hover { border-color: var(--acento); }
+button.principal { background: var(--acento); color: var(--acento-texto); border-color: var(--acento); }
+button.peligro { color: var(--error); border-color: #e3a6ae; }
+.boton-archivo { display: inline-flex; align-items: center; margin-left: 8px; }
+.boton-archivo input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.boton-archivo:focus-within { outline: 3px solid #2a7ab8; }
+
+/* ---------- Acceso ---------- */
+.acceso { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+.tarjeta-acceso { background: var(--superficie); border: 1px solid var(--borde); border-radius: 10px; padding: 28px; width: min(420px, 100%); }
+.tarjeta-acceso h1 { font-size: 1.35rem; margin: 0 0 4px; }
+.tarjeta-acceso .subtitulo { color: var(--texto-suave); margin: 0 0 20px; }
+.tarjeta-acceso label { display: block; font-weight: 600; margin-bottom: 4px; }
+.tarjeta-acceso input { font-size: 1.6rem; letter-spacing: .5em; width: 8.5ch; padding: 6px 10px; background: var(--captura); border: 1px solid var(--captura-borde); border-radius: var(--radio); }
+.tarjeta-acceso button { margin: 8px 0 16px; width: 100%; }
+
+/* ---------- Estructura ---------- */
+.barra { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+  padding: 8px 16px; background: #1f2d27; color: #fff; }
+.barra .marca { font-weight: 700; }
+.barra select { max-width: 340px; min-width: 0; flex: 1 1 180px; font: inherit; padding: 4px 6px; border-radius: var(--radio); }
+.barra button { background: transparent; color: #fff; border-color: #6c7f76; }
+.enlace-barra { color: #fff; }
+#guardado { margin-left: auto; font-size: .9rem; }
+#guardado.guardado { color: #a8e6b8; }
+#guardado.error { color: #ffb3bd; font-weight: 700; }
+.boton-menu { display: none; }
+.recordatorio { background: var(--pend-fondo); color: var(--pend-texto); padding: 8px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.cuerpo { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: calc(100vh - 100px); }
+.menu { background: var(--superficie); border-right: 1px solid var(--borde); padding: 8px 0 24px; overflow-y: auto;
+  position: sticky; top: 52px; height: calc(100vh - 52px); align-self: start; }
+.menu .grupo h2 { font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; margin: 14px 16px 4px; padding-left: 8px; border-left: 4px solid; }
+.menu .grupo:nth-child(1) h2 { border-color: var(--g-control); }
+.menu .grupo:nth-child(2) h2 { border-color: var(--g-captura); }
+.menu .grupo:nth-child(3) h2 { border-color: var(--g-actas); }
+.menu .grupo:nth-child(4) h2 { border-color: var(--g-contab); }
+.menu .grupo:nth-child(5) h2 { border-color: var(--g-docs); }
+.menu .grupo:nth-child(6) h2 { border-color: var(--g-consulta); }
+.menu .grupo:nth-child(7) h2 { border-color: var(--g-exp); }
+.menu ul { list-style: none; margin: 0; padding: 0; }
+.menu a, .menu .pendiente-fase { display: flex; justify-content: space-between; gap: 6px; padding: 5px 12px 5px 28px; text-decoration: none; color: var(--texto); }
+.menu .pendiente-fase small { white-space: nowrap; align-self: center; }
+.menu a:hover { background: #eef2ee; }
+.menu a[aria-current] { background: #e2ece6; font-weight: 700; box-shadow: inset 3px 0 0 var(--acento); }
+.menu .pendiente-fase { color: #8a918d; cursor: default; }
+.menu .pendiente-fase small { font-size: .72rem; border: 1px solid #c7ccc8; border-radius: 4px; padding: 0 4px; margin-left: 4px; }
+.contenido { padding: 20px 24px 48px; min-width: 0; outline: none; }
+.contenido h1 { margin: 0; font-size: 1.5rem; }
+.hoja-excel { display: inline-block; color: var(--texto-suave); font-size: .85rem; margin-bottom: 8px; }
+.contenido h2 { font-size: 1.1rem; margin: 14px 0 8px; }
+.intro { max-width: 80ch; }
+.nota, .ayuda { color: var(--texto-suave); font-size: .88rem; }
+.pie { padding: 8px 16px; color: var(--texto-suave); font-size: .85rem; border-top: 1px solid var(--borde); background: var(--superficie); }
+section { background: var(--superficie); border: 1px solid var(--borde); border-radius: 8px; padding: 4px 16px 14px; margin-top: 16px; }
+
+/* ---------- Campos ---------- */
+.campo { display: flex; flex-direction: column; gap: 2px; min-width: 0; position: relative; }
+.campo > label { font-weight: 600; font-size: .92rem; }
+.control { display: flex; align-items: center; gap: 4px; }
+.campo input, .campo select {
+  font: inherit; width: 100%; min-width: 7ch; padding: 4px 6px; background: var(--captura);
+  border: 1px solid var(--captura-borde); border-radius: 4px; color: var(--texto);
+}
+.campo input.propuesto { color: var(--propuesto); font-style: italic; }
+.campo .aviso { border: 2px solid var(--aviso); }
+.campo .error { border: 2px solid var(--error); }
+.msg { font-size: .82rem; }
+.msg:empty { display: none; }
+.msg.aviso { color: var(--aviso); }
+.msg.error { color: var(--error); font-weight: 600; }
+.restablecer { min-height: 28px; padding: 0 8px; font-size: 1rem; line-height: 1; }
+.rejilla-datos { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px 20px; }
+.fila-dato { display: flex; flex-direction: column; gap: 4px; }
+.ancho-l input { min-width: 22ch; }
+
+/* ---------- Datos calculados (texto sin cuadro) ---------- */
+.calc { white-space: pre-wrap; }
+.calc.alerta, .alerta { color: var(--error); }
+.calc.bien { color: var(--ok-texto); }
+.calc.gris { color: var(--texto-suave); }
+.calc:empty { display: none; }
+.alerta-fija { background: var(--pend-fondo); color: var(--pend-texto); padding: 8px 12px; border-radius: var(--radio); }
+.estado { display: inline-block; padding: 1px 8px; border-radius: 10px; font-weight: 700; font-size: .82rem; }
+.estado.bien { background: var(--ok-fondo); color: var(--ok-texto); }
+.estado.mal { background: var(--mal-fondo); color: var(--mal-texto); }
+.estado.pendiente { background: var(--pend-fondo); color: var(--pend-texto); }
+.estado.info { background: var(--info-fondo); color: var(--info-texto); }
+.origen { display: block; font-size: .75rem; color: var(--texto-suave); }
+.leyenda { background: #f8cbad; color: #c00000; padding: 6px 10px; display: inline-block; }
+.cifras { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin: 12px 0; }
+.cifras div { border: 1px solid var(--borde); border-radius: var(--radio); padding: 8px 10px; }
+.cifras dt { font-size: .8rem; color: var(--texto-suave); }
+.cifras dd { margin: 0; font-size: 1.25rem; font-weight: 700; }
+
+/* ---------- Tablas ---------- */
+.tabla-desplazable { overflow-x: auto; max-width: 100%; position: relative; }
+.tabla { border-collapse: collapse; width: 100%; font-size: .9rem; }
+.tabla th, .tabla td { border: 1px solid #dfe3df; padding: 3px 5px; vertical-align: top; text-align: left; }
+.tabla thead th { background: #eef1ee; position: sticky; top: 0; font-size: .82rem; }
+.tabla td.num { text-align: right; white-space: nowrap; }
+.tabla tr.fijo td { background: #f2f2f2; color: var(--texto-suave); }
+.tabla tr.actual td { background: #f1f8f3; }
+.tabla td.acciones { display: flex; flex-wrap: wrap; gap: 6px; }
+.tabla.compacta { width: auto; }
+.calendario td { white-space: nowrap; }
+.calendario .dia-venta { color: var(--ok-texto); text-align: center; }
+.calendario .dia-sin { background: repeating-linear-gradient(135deg, #f1f1f1 0 6px, #dcdcdc 6px 8px); color: #555; font-size: .75rem; max-width: 10ch; overflow: hidden; text-overflow: ellipsis; }
+.calendario .sin-semana td { color: #aaa; }
+.totales { font-weight: 600; }
+.padron td { min-width: 7ch; }
+
+/* ---------- Diálogos y avisos ---------- */
+.dialogo { border: 1px solid var(--borde); border-radius: 10px; padding: 20px; width: min(620px, calc(100vw - 32px)); }
+.dialogo::backdrop { background: rgba(0, 0, 0, .35); }
+.dialogo h2 { margin-top: 0; font-size: 1.2rem; }
+.dlg-botones { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.dialogo fieldset { border: 1px solid var(--borde); border-radius: var(--radio); }
+.casilla { display: block; margin: 6px 0; }
+.dialogo input[name="ciclo"] { font: inherit; padding: 4px 6px; background: var(--captura); border: 1px solid var(--captura-borde); }
+.avisos-flotantes { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 50; max-width: min(420px, calc(100vw - 32px)); }
+.flotante { padding: 10px 14px; border-radius: var(--radio); background: #263238; color: #fff; box-shadow: 0 4px 14px rgba(0, 0, 0, .2); }
+.flotante.bien { background: #1e5e33; }
+.flotante.mal { background: #8c1d18; }
+
+/* ---------- Pantallas angostas (tableta vertical y teléfono) ---------- */
+@media (max-width: 900px) {
+  .boton-menu { display: inline-block; }
+  .cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .menu { position: fixed; top: 0; left: 0; bottom: 0; height: 100vh; width: min(300px, 85vw); z-index: 30; transform: translateX(-100%); transition: transform .2s; box-shadow: 4px 0 16px rgba(0,0,0,.2); }
+  .menu-abierto .menu { transform: none; }
+  .contenido { padding: 16px; }
+  .barra .marca { display: none; }
+  #guardado { margin-left: 0; }
+}
+
+@media print {
+  .barra, .menu, .pie, .recordatorio, .avisos-flotantes { display: none !important; }
+  .cuerpo { display: block; }
+}
+</style>
+</head>
+<body class="en-acceso">
+  <main id="acceso" class="acceso" hidden>
+    <form id="form-acceso" class="tarjeta-acceso" autocomplete="off">
+      <h1>Control de Cooperativas Escolares</h1>
+      <p class="subtitulo">Registro, libro, recibos, actas y controles de la cooperativa escolar de consumo</p>
+      <label for="clave">Contraseña (4 dígitos)</label>
+      <input id="clave" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required aria-describedby="error-clave nota-clave">
+      <p id="error-clave" class="msg error" role="alert"></p>
+      <button type="submit" class="principal">Entrar</button>
+      <p id="nota-clave" class="nota">La contraseña es <strong>0000</strong> para todas las escuelas. Es solo un candado de cortesía, no una medida de seguridad: no cifra ni protege los datos. Los datos se guardan únicamente en este navegador.</p>
+    </form>
+  </main>
+
+  <div id="app" hidden>
+    <header class="barra">
+      <button type="button" id="boton-menu" class="boton-menu" aria-controls="menu" aria-expanded="false">Menú</button>
+      <span class="marca">Cooperativa escolar</span>
+      <label class="vh" for="selector-exp">Expediente abierto</label>
+      <select id="selector-exp"></select>
+      <span id="guardado" role="status" aria-live="polite"></span>
+      <a class="enlace-barra" href="#/expedientes">Respaldos</a>
+      <button type="button" id="salir">Salir</button>
+    </header>
+    <div id="recordatorio" class="recordatorio" role="region" aria-label="Recordatorio de respaldo" hidden></div>
+    <div class="cuerpo">
+      <nav id="menu" class="menu" aria-label="Hojas"></nav>
+      <main id="contenido" class="contenido" tabindex="-1"></main>
+    </div>
+    <footer class="pie">Los datos viven solo en este navegador. Exporte un respaldo cada semana.</footer>
+  </div>
+  <div id="avisos-flotantes" class="avisos-flotantes" aria-live="polite"></div>
+
+  <script>
+/* formato.js — Fechas, importes y comparaciones con las mismas reglas que Excel.
+   Las fechas se guardan como texto ISO (aaaa-mm-dd) y se calculan como número de serie de Excel
+   (días desde el 30/12/1899), así no influye la zona horaria del equipo. */
+(function (Coop) {
+  'use strict';
+
+  const DIA_MS = 86400000;
+  const BASE = Date.UTC(1899, 11, 30);
+  const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto',
+    'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+  const vacio = (v) => v === '' || v === null || v === undefined;
+
+  /* ---------- Fechas ---------- */
+  function serialDeIso(iso) {
+    if (vacio(iso)) return null;
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    if (!m) return null;
+    return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - BASE) / DIA_MS);
+  }
+
+  function isoDeSerial(n) {
+    const d = new Date(BASE + n * DIA_MS);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function partes(serial) {
+    const d = new Date(BASE + serial * DIA_MS);
+    return { dia: d.getUTCDate(), mes: d.getUTCMonth() + 1, anio: d.getUTCFullYear(), semana: d.getUTCDay() };
+  }
+
+  /* Acepta dd/mm/aaaa, d/m/aaaa, dd/mm/aa y aaaa-mm-dd. Devuelve ISO o null si no es una fecha real. */
+  function leerFecha(texto) {
+    const t = String(texto).trim();
+    if (t === '') return '';
+    let d, m, a;
+    let r = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2}|\d{4})$/.exec(t);
+    if (r) { d = +r[1]; m = +r[2]; a = +r[3]; if (r[3].length === 2) a += 2000; }
+    else {
+      r = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t);
+      if (!r) return null;
+      a = +r[1]; m = +r[2]; d = +r[3];
+    }
+    const f = new Date(Date.UTC(a, m - 1, d));
+    if (f.getUTCFullYear() !== a || f.getUTCMonth() !== m - 1 || f.getUTCDate() !== d || a < 1900) return null;
+    return f.toISOString().slice(0, 10);
+  }
+
+  function fecha(iso) {
+    if (vacio(iso)) return '';
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : String(iso);
+  }
+
+  const fechaDeSerial = (n) => (n === null || n === '' ? '' : fecha(isoDeSerial(n)));
+
+  function fechaEnLetra(serial) {
+    const p = partes(serial);
+    return `${p.dia} de ${MESES[p.mes - 1]} de ${p.anio}`;
+  }
+
+  /* Fecha de hoy en la Ciudad de México. Para pruebas puede fijarse una fecha de referencia
+     con la preferencia «coop.fechaReferencia» (aaaa-mm-dd) en el almacenamiento local. */
+  function hoySerial() {
+    let ref = null;
+    try { ref = globalThis.localStorage && localStorage.getItem('coop.fechaReferencia'); } catch (e) { ref = null; }
+    if (ref && serialDeIso(ref) !== null) return serialDeIso(ref);
+    const iso = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City', year: 'numeric', month: '2-digit', day: '2-digit' })
+      .format(new Date());
+    return serialDeIso(iso);
+  }
+
+  /* ---------- Números e importes ---------- */
+  /* ROUND de Excel: redondea a la mitad alejándose de cero y corrige el error binario con 15 dígitos. */
+  function redondear(x, decimales) {
+    if (!Number.isFinite(x)) return x;
+    const f = Math.pow(10, decimales);
+    const y = Number((Math.abs(x) * f).toPrecision(15));
+    return (Math.sign(x) * Math.round(y)) / f;
+  }
+
+  /* Convierte a centavos enteros (con el redondeo de Excel) para sumar sin errores de punto flotante. */
+  const centavos = (x) => Math.round(redondear(Number(x) || 0, 2) * 100);
+
+  /* Lee un número escrito a mano o con el teclado del teléfono. El separador decimal puede ser punto o coma:
+     · con punto y coma a la vez, el último que aparece es el decimal («1,234.50» y «1.234,50» valen 1234.5);
+     · con solo comas, «1,250» o «12,345,678» (grupos exactos de tres cifras) son miles y «12,50» o «0,5» son decimales. */
+  function leerNumero(texto) {
+    let t = String(texto).trim().replace(/[$\s]/g, '');
+    if (t === '') return '';
+    const coma = t.lastIndexOf(',');
+    const punto = t.lastIndexOf('.');
+    if (coma >= 0 && punto >= 0) {
+      t = coma > punto ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, '');
+    } else if (coma >= 0) {
+      t = /^-?\d{1,3}(,\d{3})+$/.test(t) ? t.replace(/,/g, '') : t.replace(',', '.');
+    }
+    if (!/^-?(\d+\.?\d*|\.\d+)$/.test(t)) return null;
+    return Number(t);
+  }
+
+  function miles(entero) {
+    return String(entero).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  /* Formato «$1,234.56» (negativos como -$1,234.56, igual que el formato de celda del Excel). */
+  function moneda(x) {
+    if (vacio(x) || !Number.isFinite(Number(x))) return vacio(x) ? '' : String(x);
+    const c = centavos(Math.abs(Number(x)));
+    const texto = `$${miles(Math.floor(c / 100))}.${String(c % 100).padStart(2, '0')}`;
+    return Number(x) < 0 && c > 0 ? `-${texto}` : texto;
+  }
+
+  function entero(x) {
+    if (vacio(x) || !Number.isFinite(Number(x))) return vacio(x) ? '' : String(x);
+    const n = Math.round(Number(x));
+    return (n < 0 ? '-' : '') + miles(Math.abs(n));
+  }
+
+  /* ---------- Texto con las reglas de Excel ---------- */
+  /* «=» de Excel entre textos: no distingue mayúsculas, sí distingue acentos. */
+  const igual = (a, b) => String(a ?? '').toUpperCase() === String(b ?? '').toUpperCase();
+  /* COUNTIF(rango,"?*"): textos con al menos un carácter. */
+  const tieneTexto = (v) => typeof v === 'string' && v.length > 0;
+  /* N() de Excel: número o 0. */
+  const N = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+  /* TRIM de Excel: quita espacios de los extremos y deja uno solo entre palabras. */
+  const recortar = (t) => String(t).replace(/ +/g, ' ').trim();
+
+  Coop.f = {
+    MESES, vacio, serialDeIso, isoDeSerial, partes, leerFecha, fecha, fechaDeSerial, fechaEnLetra, hoySerial,
+    redondear, centavos, leerNumero, moneda, entero, igual, tieneTexto, N, recortar,
+  };
+})(globalThis.Coop = globalThis.Coop || {});
+</script>
+  <script>
+/* modelo.js — Estructura de un expediente (un ciclo escolar), valores de la plantilla,
+   normalización, migración de versiones y duplicado como base del siguiente ciclo.
+   Cada arreglo tiene la misma capacidad que su rango en el Excel. Un dato vacío se guarda como ''. */
+(function (Coop) {
+  'use strict';
+
+  const VERSION_ESQUEMA = 2;
+
+  const CAPACIDAD = { periodos: 60, productos: 8, historial: 200, conceptos: 40, socios: 400, proveedores: 15 };
+  const LUGAR_AGUA = 6; // índice 0-based: el agua ocupa el lugar 7 (CATÁLOGOS, renglón 12)
+
+  const FUNCIONES_FIRMA = ['Presidencia', 'Tesorería', 'Comité de Vigilancia', 'Comisión de Educación Cooperativa', 'Vo. Bo. de la Dirección'];
+
+  const FUENTE_SEP = 'Calendario SEP 2026-2027 (El Contribuyente, sep. 2026). Confirmar con el calendario oficial.';
+
+  /* Valores que trae la plantilla «ARCHIVO SIN DATOS» del 01/11/2026 (celdas de captura con dato). */
+  const PLANTILLA = {
+    ciclo: {
+      ciclo: '2026-2027', primerDia: '2026-08-31', ultimoDia: '2027-07-09', diasClase: 185, ciudad: 'Ciudad de México',
+      cargos: ['Presidencia de la cooperativa', 'Tesorería de la cooperativa', 'Comité de Vigilancia',
+        'Comisión de Educación Cooperativa', 'Directora del plantel'],
+      periodos: [
+        ['2026-09-16', '2026-09-16', 'Día de la Independencia'],
+        ['2026-09-25', '2026-09-25', 'Sesión ordinaria de CTE'],
+        ['2026-10-30', '2026-10-30', 'Sesión ordinaria de CTE'],
+        ['2026-11-02', '2026-11-02', 'Día de Muertos'],
+        ['2026-11-13', '2026-11-13', 'Registro de calificaciones'],
+        ['2026-11-16', '2026-11-16', 'Aniversario de la Revolución'],
+        ['2026-11-27', '2026-11-27', 'Sesión ordinaria de CTE'],
+        ['2026-12-21', '2027-01-06', 'Vacaciones de invierno (regreso el 7 de enero)'],
+        ['2027-01-29', '2027-01-29', 'Sesión ordinaria de CTE'],
+        ['2027-02-01', '2027-02-01', 'Día de la Constitución'],
+        ['2027-02-26', '2027-02-26', 'Sesión ordinaria de CTE'],
+        ['2027-03-05', '2027-03-05', 'Registro de calificaciones'],
+        ['2027-03-15', '2027-03-15', 'Natalicio de Benito Juárez'],
+        ['2027-03-22', '2027-04-02', 'Vacaciones de Semana Santa'],
+        ['2027-04-30', '2027-04-30', 'Sesión ordinaria de CTE'],
+        ['2027-05-05', '2027-05-05', 'Batalla de Puebla'],
+        ['2027-05-28', '2027-05-28', 'Sesión ordinaria de CTE'],
+        ['2027-06-18', '2027-06-18', 'Registro de calificaciones'],
+        ['2027-06-25', '2027-06-25', 'Sesión ordinaria de CTE'],
+      ],
+    },
+    origenAlimentos: 'Historial de precios',
+    conceptos: [
+      ['APORTACIÓN DE SOCIO NUEVO', 'Incremento al capital social', '', '', 'Ingreso', 'Sin fecha fija', 'Certificados de aportación de socios nuevos', '(Tesorería)'],
+      ['INTERESES BANCARIOS DEL MES', 'Intereses bancarios', '', 'Según estado de cuenta.', 'Ingreso', 'Mensual', 'Estado de cuenta de', 'Banco (estado de cuenta)'],
+      ['PASAJES A DIRECCIÓN DE PRIMARIAS No. 1', 'Gasto con cargo al fondo social', '', '', '10 % de apoyo a la Dirección (sin acta)', 'Sin fecha fija', 'Entrega de estadística', '(Dirección)'],
+      ['PASAJES A DGARH', 'Gasto con cargo al fondo social', '', '', '10 % de apoyo a la Dirección (sin acta)', 'Sin fecha fija', 'Entrega de documentación', '(Dirección)'],
+      ['PASAJES A CGRH', 'Gasto con cargo al fondo social', '', '', '10 % de apoyo a la Dirección (sin acta)', 'Sin fecha fija', 'Trámite de plantilla de personal', '(Dirección)'],
+      ['PASAJES AL ARCHIVO CENTRAL DE RECURSOS HUMANOS', 'Gasto con cargo al fondo social', '', '', '10 % de apoyo a la Dirección (sin acta)', 'Sin fecha fija', 'Trámite de expedientes', '(Dirección)'],
+      ['PASAJES A COMISIÓN NACIONAL MIXTA DE ESCALAFÓN', 'Gasto con cargo al fondo social', '', '', '10 % de apoyo a la Dirección (sin acta)', 'Sin fecha fija', 'Entrega de documentación de escalafón', '(Dirección)'],
+      ['PASAJES A ALCALDÍA', 'Gasto con cargo al fondo social', '', '', '10 % de apoyo a la Dirección (sin acta)', 'Sin fecha fija', 'Trámite ante la alcaldía', '(Dirección)'],
+      ['BASURA', 'Gasto con cargo al fondo social', '', '', 'Requiere acta previa (autorización)', 'Semanal', 'Cooperación semanal para la recolección de basura', ''],
+      ['FLETE / TRANSPORTE DE LIBROS', 'Gasto con cargo al fondo social', '', '', 'Requiere acta previa (autorización)', 'Sin fecha fija', 'Traslado de libros de texto', ''],
+      ['PASAJES AL BANCO', 'Gasto de administración', '', '', 'Gasto de administración (sin acta)', 'Sin fecha fija', 'Depósito de utilidades', '(Tesorería)'],
+      ['GASTOS DE ENVÍO DE AGUA', 'Gasto de administración', '', '', 'Gasto de administración (sin acta)', 'Sin fecha fija', 'Envío de agua purificada', ''],
+      ['COPIAS Y PAPELERÍA', 'Gasto de administración', '', '', 'Gasto de administración (sin acta)', 'Sin fecha fija', '', '(Presidencia)'],
+      ['APOYO A LA DIRECCIÓN (10 % DE LAS UTILIDADES SEMANALES)', 'Gasto con cargo al fondo social', '', 'Tope: 10 % de la utilidad de la semana; no acumulable; se informa en asamblea (Orientaciones 2025-2026, «Apoyo del 10 %»).', '10 % de apoyo a la Dirección (sin acta)', 'Sin fecha fija', '', '(Dirección)'],
+      ['GASTO EMERGENTE HIDROSANITARIO, ELÉCTRICO O DE SEGURIDAD (FONDO SOCIAL 40 %)', 'Gasto con cargo al fondo social', '', 'Solo emergencias hidrosanitarias, eléctricas o de seguridad; se ejerce y después se levanta el acta de reconocimiento (Orientaciones 2025-2026, «Reconocimiento de gastos»). Ver CORTES: fondo social disponible.', 'Reconocimiento (acta posterior al gasto)', 'Sin fecha fija', '', ''],
+      ['TRASLADO DE EXTINTORES (LLEVADA Y REGRESO)', 'Gasto con cargo al fondo social', '', 'Requiere acta (Orientaciones 2025-2026, «Autorización de gastos», 1.2.2). Un acta cubre la llevada y el regreso; imprímala en la hoja ACTA EXTINTORES.', 'Requiere acta previa (autorización)', 'Sin fecha fija', '', ''],
+      ['TRANSPORTE A CONCURSOS U OLIMPIADA DEL CONOCIMIENTO INFANTIL', 'Gasto con cargo al fondo social', '', 'Requiere acta (Orientaciones 2025-2026, «Autorización de gastos», 1.2.2); no se cubre con el 10 %.', 'Requiere acta previa (autorización)', 'Sin fecha fija', '', ''],
+      ['FOTOCOPIAS PARA LA DIRECCIÓN (SIN FOTOCOPIADORA)', 'Gasto con cargo al fondo social', '', 'Solo si la escuela no cuenta con fotocopiadora; se cubre con el 10 % de la semana (Orientaciones 2025-2026, «Apoyo del 10 %», inciso a).', '10 % de apoyo a la Dirección (sin acta)', 'Sin fecha fija', 'Fotocopias para la Dirección', '(Dirección)'],
+      ['COMISIONES BANCARIAS', 'Gasto de administración', '', 'Según estado de cuenta. No requiere acta: se comprueba con el estado de cuenta.', 'Gasto de administración (sin acta)', 'Mensual', 'Comisión bancaria de', 'Banco (estado de cuenta)'],
+      ['SELLOS, LIBRO CONTABLE, LIBRO DE ACTAS O CUADERNOS', 'Gasto de administración', '', 'No requiere acta de autorización (Orientaciones); solo recibo o nota.', 'Gasto de administración (sin acta)', 'Sin fecha fija', '', '(Tesorería)'],
+      ['SERVICIO PROGRAMABLE (MANTENIMIENTO, REPARACIÓN O CONTRATACIÓN)', 'Gasto con cargo al fondo social', '', 'Requiere convocatoria extraordinaria y acta de autorización previa (Orientaciones).', 'Requiere acta previa (autorización)', 'Sin fecha fija', '', ''],
+      ['ADQUISICIÓN DE BIENES PARA EL PLANTEL', 'Gasto con cargo al fondo social', '', 'Requiere acta de autorización previa y 3 cotizaciones (Orientaciones).', 'Requiere acta previa (autorización)', 'Sin fecha fija', '', ''],
+      ['GASTO CON CARGO AL FONDO DE RESERVA', 'Gasto con cargo al fondo de reserva', '', 'Para mantener o incrementar las actividades de la cooperativa o atender pérdidas comprobadas (art. 48). Requiere acta previa.', 'Requiere acta previa (autorización)', 'Sin fecha fija', '', ''],
+      ['ENTREGA DEL FONDO REPARTIBLE A LOS SOCIOS', 'Entrega del fondo repartible', '', 'Total entregado según el COE-02 (art. 49). El respaldo es el acta de distribución y el COE-02: no escriba número de acta en este renglón.', 'Gasto de administración (sin acta)', 'Sin fecha fija', 'Fondo repartible entregado a los socios (ver COE-02)', '(Tesorería)'],
+      ['DEVOLUCIÓN DE CERTIFICADOS DE APORTACIÓN', 'Devolución de certificados de aportación', '', 'A socios que causan baja (art. 43). Total según el COE-03.', 'Gasto de administración (sin acta)', 'Sin fecha fija', 'Certificados devueltos a socios que causan baja (ver COE-03)', '(Tesorería)'],
+    ],
+  };
+
+  const CAMPOS_PERIODO = ['desde', 'hasta', 'motivo', 'fuente'];
+  const CAMPOS_PRODUCTO = ['nombre', 'origen', 'observacion'];
+  const CAMPOS_HISTORIAL = ['producto', 'fecha', 'precio', 'costo', 'fuente'];
+  const CAMPOS_CONCEPTO = ['concepto', 'clasificacion', 'importeRef', 'observacion', 'tratamiento', 'fechaSugerida', 'detalle', 'persona'];
+  const CAMPOS_SOCIO = ['nombre', 'tipo', 'grupo', 'socio', 'nuevo', 'alta', 'certificado', 'baja', 'devuelto', 'fechaDevolucion', 'tutor', 'frEntregado', 'observaciones'];
+  /* «fechaFirma» es un campo propuesto: null = usar la propuesta (fecha del acta de proveedores). */
+  const CAMPOS_PROVEEDOR = ['nombre', 'productos', 'domicilio', 'rfc', 'telefono', 'ine', 'fechaFirma', 'vigencia', 'observaciones'];
+
+  const renglon = (campos, valores = []) => Object.fromEntries(campos.map((c, i) => [c, valores[i] ?? '']));
+  const tabla = (campos, n, filas = []) => Array.from({ length: n }, (_, i) => renglon(campos, filas[i]));
+
+  function nuevoId() {
+    if (globalThis.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'exp-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  }
+
+  /* Expediente vacío. Con «conPlantilla» trae los valores del formato 2026-2027; sin ella, el calendario va vacío. */
+  function crearExpediente(conPlantilla = true) {
+    const P = PLANTILLA;
+    const productos = tabla(CAMPOS_PRODUCTO, CAPACIDAD.productos);
+    for (let i = 0; i < LUGAR_AGUA; i++) productos[i].origen = P.origenAlimentos;
+    const ahora = new Date().toISOString();
+    const exp = {
+      id: nuevoId(),
+      versionEsquema: VERSION_ESQUEMA,
+      creado: ahora,
+      modificado: ahora,
+      ciclo: {
+        ciclo: conPlantilla ? P.ciclo.ciclo : '',
+        primerDia: conPlantilla ? P.ciclo.primerDia : '',
+        ultimoDia: conPlantilla ? P.ciclo.ultimoDia : '',
+        escuela: '', cct: '', cooperativa: '', clave: '', registro: '', socios: '', efectivoAnterior: '',
+        ciudad: conPlantilla ? P.ciclo.ciudad : '',
+        diasClase: conPlantilla ? P.ciclo.diasClase : '',
+        fotocopiadora: '',
+        firmantes: FUNCIONES_FIRMA.map((_, i) => ({ nombre: '', cargo: P.ciclo.cargos[i], saliente: i === 4 ? null : '' })),
+        proveedor: { nombre: '', domicilio: '', rfc: '', telefono: '' },
+        periodos: tabla(CAMPOS_PERIODO, CAPACIDAD.periodos,
+          conPlantilla ? P.ciclo.periodos.map((p) => [p[0], p[1], p[2], FUENTE_SEP]) : []),
+      },
+      catalogos: {
+        productos,
+        historial: tabla(CAMPOS_HISTORIAL, CAPACIDAD.historial),
+        conceptos: tabla(CAMPOS_CONCEPTO, CAPACIDAD.conceptos, P.conceptos),
+      },
+      socios: { usarPadron: 'No', lista: tabla(CAMPOS_SOCIO, CAPACIDAD.socios) },
+      proveedores: tabla(CAMPOS_PROVEEDOR, CAPACIDAD.proveedores).map((p) => ({ ...p, fechaFirma: null })),
+    };
+    /* El renglón del agua es fijo y no se captura (CATÁLOGOS, renglón 12). */
+    exp.catalogos.productos[LUGAR_AGUA] = { nombre: 'AGUA', origen: 'Compras de agua', observacion: '' };
+    return exp;
+  }
+
+  /* Completa lo que falte (renglones, campos) sin tocar lo capturado. Sirve al abrir, importar y migrar. */
+  function normalizar(exp) {
+    const base = crearExpediente(false);
+    const fusionar = (campos, n, filas, extra) => Array.from({ length: n }, (_, i) => {
+      const r = filas && filas[i] ? filas[i] : {};
+      const o = renglon(campos, campos.map((c) => (r[c] === undefined ? undefined : r[c])));
+      if (extra) extra(o, r);
+      return o;
+    });
+    const c = exp.ciclo || {};
+    const out = {
+      ...base,
+      id: exp.id || base.id,
+      versionEsquema: VERSION_ESQUEMA,
+      creado: exp.creado || base.creado,
+      modificado: exp.modificado || base.modificado,
+      ciclo: { ...base.ciclo, ...c },
+      catalogos: {
+        productos: fusionar(CAMPOS_PRODUCTO, CAPACIDAD.productos, exp.catalogos && exp.catalogos.productos),
+        historial: fusionar(CAMPOS_HISTORIAL, CAPACIDAD.historial, exp.catalogos && exp.catalogos.historial),
+        conceptos: fusionar(CAMPOS_CONCEPTO, CAPACIDAD.conceptos, exp.catalogos && exp.catalogos.conceptos),
+      },
+      socios: {
+        usarPadron: exp.socios && exp.socios.usarPadron !== undefined ? exp.socios.usarPadron : 'No',
+        lista: fusionar(CAMPOS_SOCIO, CAPACIDAD.socios, exp.socios && exp.socios.lista),
+      },
+      proveedores: fusionar(CAMPOS_PROVEEDOR, CAPACIDAD.proveedores, exp.proveedores,
+        (o, r) => { o.fechaFirma = r.fechaFirma === undefined ? null : r.fechaFirma; }),
+    };
+    out.ciclo.firmantes = FUNCIONES_FIRMA.map((_, i) => {
+      const f = (c.firmantes && c.firmantes[i]) || {};
+      return {
+        nombre: f.nombre ?? '',
+        cargo: f.cargo ?? base.ciclo.firmantes[i].cargo,
+        saliente: i === 4 ? (f.saliente === undefined ? null : f.saliente) : (f.saliente ?? ''),
+      };
+    });
+    out.ciclo.proveedor = { ...base.ciclo.proveedor, ...(c.proveedor || {}) };
+    out.ciclo.periodos = fusionar(CAMPOS_PERIODO, CAPACIDAD.periodos, c.periodos);
+    out.catalogos.productos[LUGAR_AGUA] = { nombre: 'AGUA', origen: 'Compras de agua', observacion: '' };
+    return out;
+  }
+
+  /* Migraciones: una función por versión anterior (de n a n+1). La versión 1 es la primera. */
+  const MIGRACIONES = {
+    /* 1 → 2 (01/11/2026): el fondo repartible entregado y los certificados devueltos dejan de clasificarse como
+       gasto del fondo de reserva (Reglamento, arts. 43, 46 y 49; Guía de Actas de Cooperativa Escolar). */
+    1: (exp) => {
+      const nuevas = {
+        'ENTREGA DEL FONDO REPARTIBLE A LOS SOCIOS': 'Entrega del fondo repartible',
+        'DEVOLUCIÓN DE CERTIFICADOS DE APORTACIÓN': 'Devolución de certificados de aportación',
+      };
+      const conceptos = ((exp.catalogos && exp.catalogos.conceptos) || []).map((c) => {
+        const clave = String(c.concepto || '').toUpperCase();
+        return nuevas[clave] && c.clasificacion === 'Gasto con cargo al fondo de reserva' ? { ...c, clasificacion: nuevas[clave] } : c;
+      });
+      return { ...exp, versionEsquema: 2, catalogos: { ...exp.catalogos, conceptos } };
+    },
+  };
+
+  function migrar(exp) {
+    const v = Number(exp.versionEsquema) || 1;
+    if (v > VERSION_ESQUEMA) {
+      throw new Error(`El expediente «${(exp.ciclo && exp.ciclo.ciclo) || 'sin ciclo'}» se hizo con una versión más nueva de la app (esquema ${v}). Actualice la app para abrirlo.`);
+    }
+    let actual = exp;
+    for (let n = v; n < VERSION_ESQUEMA; n++) actual = MIGRACIONES[n](actual);
+    return normalizar(actual);
+  }
+
+  function siguienteCiclo(ciclo) {
+    const m = /^(\d{4})-(\d{4})$/.exec(String(ciclo || '').trim());
+    return m ? `${+m[1] + 1}-${+m[2] + 1}` : '';
+  }
+
+  /* Duplicado como base del siguiente ciclo. «que» indica qué bloques se copian (los elige la persona).
+     Nunca se copian las fechas del ciclo, los días de clase, los periodos sin venta, el número de socios
+     ni el efectivo anterior: son propios de cada ciclo. */
+  function duplicarComoBase(origen, nombreCiclo, que) {
+    const nuevo = crearExpediente(false);
+    const o = JSON.parse(JSON.stringify(origen));
+    nuevo.ciclo.ciclo = nombreCiclo;
+    if (que.escuela) {
+      for (const k of ['escuela', 'cct', 'cooperativa', 'clave', 'registro', 'ciudad', 'fotocopiadora']) nuevo.ciclo[k] = o.ciclo[k];
+    }
+    if (que.mesa) {
+      nuevo.ciclo.firmantes = o.ciclo.firmantes.map((f, i) => (i === 4
+        ? { nombre: f.nombre, cargo: f.cargo, saliente: null }
+        : { nombre: '', cargo: f.cargo, saliente: f.nombre }));
+    }
+    if (que.proveedorAlimentos) nuevo.ciclo.proveedor = o.ciclo.proveedor;
+    if (que.catalogos) nuevo.catalogos = o.catalogos;
+    if (que.proveedores) nuevo.proveedores = o.proveedores.map((p) => ({ ...p, fechaFirma: null }));
+    if (que.socios) nuevo.socios = o.socios;
+    return normalizar(nuevo);
+  }
+
+  Coop.modelo = {
+    VERSION_ESQUEMA, CAPACIDAD, LUGAR_AGUA, FUNCIONES_FIRMA, PLANTILLA,
+    crearExpediente, normalizar, migrar, siguienteCiclo, duplicarComoBase,
+  };
+})(globalThis.Coop = globalThis.Coop || {});
+</script>
+  <script>
+/* calculos.js — Réplica en JavaScript de las fórmulas del Excel, sin interfaz.
+   Cada función indica la hoja y el rango que reproduce. Todas reciben el expediente y no lo modifican. */
+(function (Coop) {
+  'use strict';
+  const F = Coop.f;
+  const { vacio, igual, tieneTexto, N, recortar } = F;
+  const MESES_MAY = F.MESES.map((m) => m.toUpperCase());
+
+  const serial = (iso) => F.serialDeIso(iso);
+  const esFecha = (iso) => serial(iso) !== null;
+  const textoDe = (v) => (vacio(v) ? '' : String(v));
+
+  /* ---------- INGRESA DATOS ---------- */
+
+  /* Calendario H6:X57 (52 semanas). Un día cuenta como «con venta» si está entre el primer y el último
+     día de ventas y no cae en ningún periodo sin venta (Desde ≤ día ≤ Hasta). */
+  function calendario(exp) {
+    const c = exp.ciclo;
+    const ini = N(serial(c.primerDia));
+    const fin = N(serial(c.ultimoDia));
+    const periodos = c.periodos.map((p) => ({ desde: serial(p.desde), hasta: serial(p.hasta), motivo: p.motivo }));
+    /* COUNTIFS solo cuenta renglones con Desde y Hasta numéricos. */
+    const enPeriodo = (d) => periodos.some((p) => p.desde !== null && p.hasta !== null && p.desde <= d && p.hasta >= d);
+    /* MATCH matricial: una celda vacía en Desde vale 0 (cumple «<= día»); vacía en Hasta no cumple. */
+    const motivoDe = (d) => {
+      const p = periodos.find((q) => N(q.desde) <= d && q.hasta !== null && q.hasta >= d);
+      return p ? textoDe(p.motivo) : 'SIN VENTA';
+    };
+    const semanas = [];
+    let numVenta = 0;
+    for (let h = 1; h <= 52; h++) {
+      const s = { h, lunes: null, viernes: null, dias: [], motivos: [], diasConVenta: '', semanaVenta: '', rotulo: '', ultimoDia: '' };
+      if (ini !== 0 && fin !== 0 && ini + 7 * (h - 1) <= fin) {
+        s.lunes = ini + 7 * (h - 1);
+        s.viernes = s.lunes + 4;
+        for (let k = 0; k < 5; k++) {
+          const d = s.lunes + k;
+          const fuera = d < ini || d > fin;
+          const estado = fuera || enPeriodo(d) ? 0 : 1;
+          s.dias.push(estado);
+          s.motivos.push(estado === 1 ? '' : (fuera ? 'FUERA DEL PERIODO DE VENTAS' : motivoDe(d)));
+        }
+        s.diasConVenta = s.dias.reduce((a, b) => a + b, 0);
+        if (s.diasConVenta > 0) {
+          numVenta += 1;
+          s.semanaVenta = numVenta;
+          s.ultimoDia = s.lunes + s.dias.lastIndexOf(1);
+        }
+        s.rotulo = rotuloSemana(s.lunes, s.viernes);
+      }
+      semanas.push(s);
+    }
+    const totalDias = semanas.reduce((a, s) => a + N(s.diasConVenta), 0);
+    const totalSemanas = numVenta;
+    return {
+      semanas, totalDias, totalSemanas,
+      resumen: `Días con venta: ${totalDias} | Días oficiales de clase: ${textoDe(c.diasClase)} | Semanas de venta: ${totalSemanas}`,
+    };
+  }
+
+  /* INGRESA DATOS R6: «SEMANA DEL 31 DE AGOSTO AL 4 DE SEPTIEMBRE DE 2026». */
+  function rotuloSemana(lunes, viernes) {
+    const a = F.partes(lunes);
+    const b = F.partes(viernes);
+    return `SEMANA DEL ${a.dia}${a.mes === b.mes ? '' : ' DE ' + MESES_MAY[a.mes - 1]}${a.anio === b.anio ? '' : ' DE ' + a.anio}`
+      + ` AL ${b.dia} DE ${MESES_MAY[b.mes - 1]} DE ${b.anio}`;
+  }
+
+  /* Nombre definido FechaRenov: fecha de la primera Asamblea Ordinaria registrada en CAPTURA ACTAS.
+     Las actas se capturan a partir de la Fase 3; mientras el expediente no tenga actas vale 0. */
+  function fechaRenovacion(exp) {
+    const fechas = (exp.actas || []).filter((a) => igual(String(a.tipo || '').slice(0, 9), 'ORDINARIA') && esFecha(a.fecha))
+      .map((a) => serial(a.fecha));
+    return fechas.length ? Math.min(...fechas) : 0;
+  }
+
+  /* INGRESA DATOS E24 (campo propuesto). */
+  function propuestaCambioConsejo(exp) {
+    const f = fechaRenovacion(exp);
+    return f > 0 ? `Cambio de Consejo: ${F.fechaEnLetra(f)}` : 'Cambio de Consejo: al capturar la Ordinaria en CAPTURA ACTAS';
+  }
+
+  /* ---------- SOCIOS ---------- */
+
+  /* Valor del certificado (SOCIOS H4 = ACTA ORDINARIA H9): importe de referencia del concepto
+     «APORTACIÓN DE SOCIO NUEVO»; si el concepto no existe, 5; si existe sin importe, 0. */
+  function valorCertificado(exp) {
+    const c = exp.catalogos.conceptos.find((x) => igual(x.concepto, 'APORTACIÓN DE SOCIO NUEVO'));
+    if (!c) return 5;
+    if (typeof c.importeRef === 'string' && c.importeRef !== '') return 5; // texto + 0 da error y el IFERROR devuelve 5
+    return N(c.importeRef);
+  }
+
+  /* SOCIOS B7:W406 y D3:M4. */
+  function socios(exp) {
+    const lista = exp.socios.lista;
+    const nombres = lista.map((s) => String(s.nombre).toUpperCase());
+    const vc = valorCertificado(exp);
+    let kAct = 0, kNuevo = 0, kBaja = 0;
+    const filas = lista.map((s, i) => {
+      if (vacio(s.nombre)) return { no: '', control: '', activo: 0, nuevo: 0, bajaDev: 0, kAct: '', kNuevo: '', kBaja: '', cert: '' };
+      const repetido = nombres.filter((n) => n === nombres[i]).length > 1;
+      const control = recortar((vacio(s.socio) ? 'Marque si es socio. ' : '')
+        + (igual(s.socio, 'Sí') && vacio(s.tipo) ? 'Falta el tipo. ' : '')
+        + (igual(s.devuelto, 'Sí') && !esFecha(s.baja) ? 'Falta la fecha de baja. ' : '')
+        + (repetido ? 'Nombre repetido. ' : ''));
+      const activo = igual(s.socio, 'Sí') && vacio(s.baja) ? 1 : 0;
+      const nuevo = igual(s.socio, 'Sí') && igual(s.nuevo, 'Sí') ? 1 : 0;
+      const bajaDev = esFecha(s.baja) && igual(s.devuelto, 'Sí') ? 1 : 0;
+      return {
+        no: i + 1, control, activo, nuevo, bajaDev,
+        kAct: activo ? ++kAct : '', kNuevo: nuevo ? ++kNuevo : '', kBaja: bajaDev ? ++kBaja : '',
+        cert: N(s.certificado) > 0 ? s.certificado : vc,
+      };
+    });
+    const activos = kAct;
+    const alumnos = lista.filter((s, i) => igual(s.tipo, 'Alumno') && filas[i].activo === 1).length;
+    const conObservacion = filas.filter((f) => tieneTexto(f.control)).length;
+    const usar = igual(exp.socios.usarPadron, 'Sí');
+    return {
+      filas, activos, alumnos, maestrosEmpleados: activos - alumnos, nuevos: kNuevo, bajasDevueltas: kBaja,
+      conObservacion, valorCertificado: vc,
+      textoUso: usar ? `✔ El archivo usa el padrón: ${activos} socios.`
+        : `El archivo usa el número de INGRESA DATOS (${textoDe(exp.ciclo.socios)}). Padrón: ${activos} activos.`,
+      textoControl: conObservacion === 0 ? '✔ Padrón sin observaciones' : `⚠ Renglones con observación: ${conObservacion} (columna Control)`,
+    };
+  }
+
+  /* Nombre definido NumSocios: el padrón si SOCIOS H3 = «Sí»; si no, INGRESA DATOS C13 ('' si está vacío). */
+  function numSocios(exp) {
+    if (igual(exp.socios.usarPadron, 'Sí')) return socios(exp).activos;
+    return exp.ciclo.socios;
+  }
+
+  /* INGRESA DATOS D13. */
+  function textoSociosCiclo(exp) {
+    const s = socios(exp);
+    return `Socios inscritos en el ciclo. Padrón (hoja SOCIOS): ${s.activos}`
+      + (igual(exp.socios.usarPadron, 'Sí') ? ' · EN USO: el padrón manda sobre este número.' : ' · en uso: este número.');
+  }
+
+  /* ---------- CATÁLOGOS ---------- */
+
+  /* Control G20:G219 del historial de precios. */
+  function controlHistorial(exp) {
+    const prods = exp.catalogos.productos;
+    return exp.catalogos.historial.map((h) => {
+      if (vacio(h.producto) && vacio(h.fecha) && vacio(h.precio)) return '';
+      const p = prods.find((x) => !vacio(x.nombre) && igual(x.nombre, h.producto));
+      const origen = p ? p.origen : '';
+      return recortar((vacio(h.producto) ? 'Falta producto. ' : '')
+        + (!esFecha(h.fecha) ? 'Falta fecha. ' : '')
+        + (N(h.precio) <= 0 ? 'Falta precio. ' : '')
+        + (N(h.costo) <= 0 && origen === 'Historial de precios' ? 'Falta costo. ' : ''));
+    });
+  }
+
+  /* Aviso de la app (decisión de la Fase 1, pregunta 8): el Excel promedia dos precios del mismo producto
+     con la misma fecha de vigencia. No cambia ningún cálculo; solo avisa. */
+  function historialDuplicado(exp) {
+    const h = exp.catalogos.historial;
+    return h.map((r, i) => !vacio(r.producto) && esFecha(r.fecha)
+      && h.some((q, j) => j !== i && igual(q.producto, r.producto) && q.fecha === r.fecha));
+  }
+
+  /* ---------- PROVEEDORES ---------- */
+
+  /* PROVEEDORES I7 (campo propuesto): fecha del acta de proveedores que elige CARTA COMPROMISO
+     (H3; vacío = la última de ese tipo). Las actas llegan en la Fase 3: sin actas, la propuesta va vacía. */
+  function propuestaFirmaCarta(exp) {
+    const actas = exp.actas || [];
+    const tipo = 'PROVEEDORES · Selección de proveedores y precios de venta';
+    const elegida = exp.cartaCompromiso && !vacio(exp.cartaCompromiso.acta) ? N(exp.cartaCompromiso.acta)
+      : actas.reduce((m, a, i) => (a.tipo === tipo ? i + 1 : m), 0);
+    const acta = elegida > 0 ? actas[elegida - 1] : null;
+    return acta && esFecha(acta.fecha) ? acta.fecha : '';
+  }
+
+  /* Valor efectivo de un campo propuesto: lo capturado o, si no hay, la propuesta. */
+  const efectivo = (capturado, propuesta) => (capturado === null || capturado === undefined ? propuesta : capturado);
+
+  /* PROVEEDORES B7:K21. El renglón 1 sale del proveedor de alimentos de INGRESA DATOS. */
+  function proveedores(exp, hoy = F.hoySerial()) {
+    const fin = serial(exp.ciclo.ultimoDia);
+    return exp.proveedores.map((p, i) => {
+      const nombre = i === 0 ? textoDe(exp.ciclo.proveedor.nombre) : textoDe(p.nombre);
+      const datos = i === 0
+        ? { domicilio: textoDe(exp.ciclo.proveedor.domicilio), rfc: textoDe(exp.ciclo.proveedor.rfc), telefono: textoDe(exp.ciclo.proveedor.telefono) }
+        : { domicilio: p.domicilio, rfc: p.rfc, telefono: p.telefono };
+      const fechaFirma = i === 0 ? efectivo(p.fechaFirma, propuestaFirmaCarta(exp)) : (p.fechaFirma ?? '');
+      let estado = '';
+      if (nombre !== '') {
+        if (igual(p.ine, 'No aplica')) estado = '✔ Compra comercial: no requiere carta compromiso';
+        else if (!esFecha(fechaFirma)) estado = '✖ Sin carta compromiso firmada';
+        else if (!igual(p.ine, 'Sí')) estado = '⚠ Falta copia de INE al reverso';
+        else {
+          const vence = esFecha(p.vigencia) ? serial(p.vigencia) : N(fin);
+          estado = vence < hoy ? '✖ Vencida' : '✔ Vigente';
+        }
+      }
+      return { no: nombre === '' ? '' : i + 1, nombre, ...datos, fechaFirma, estado };
+    });
+  }
+
+  /* ---------- Controles (RESUMEN Y CONTROLES y TABLERO) disponibles en esta fase ---------- */
+
+  function controles(exp, hoy = F.hoySerial()) {
+    const c = exp.ciclo;
+    const cal = calendario(exp);
+    const ns = numSocios(exp);
+    const firmas = c.firmantes.map((f) => f.nombre);
+    const ctl2 = [c.ciclo, c.clave, c.registro, ns, c.efectivoAnterior, ...firmas].some(vacio);
+    const histInc = controlHistorial(exp).filter(tieneTexto).length;
+    const s = socios(exp);
+    const prov = proveedores(exp, hoy);
+    const provPend = prov.filter((p) => p.estado.startsWith('✖') || p.estado.startsWith('⚠')).length;
+    const conNombre = prov.filter((p) => tieneTexto(p.nombre)).length;
+    const vigentes = prov.filter((p) => p.estado.startsWith('✔')).length;
+    const soc19 = s.conObservacion > 0 ? 'REVISAR'
+      : (igual(exp.socios.usarPadron, 'Sí') ? 'OK' : (s.activos === N(c.socios) ? 'OK' : 'PENDIENTE'));
+    return [
+      { no: 1, origen: 'RESUMEN Y CONTROLES', nombre: 'Bloques suficientes para el calendario',
+        estado: cal.totalSemanas <= 45 ? 'OK' : 'REVISAR', ruta: 'ciclo',
+        detalle: `Semanas de venta programadas: ${cal.totalSemanas} de 45 bloques disponibles en el REGISTRO SEMANAL.` },
+      { no: 2, origen: 'RESUMEN Y CONTROLES', nombre: 'Datos del ciclo y firmantes completos',
+        estado: ctl2 ? 'REVISAR' : 'OK', ruta: 'ciclo',
+        detalle: 'Revise en INGRESA DATOS: clave, número de registro, socios, efectivo anterior y firmantes.' },
+      { no: 5, origen: 'RESUMEN Y CONTROLES', nombre: 'Historial de precios completo',
+        estado: histInc === 0 ? 'OK' : 'REVISAR', ruta: 'catalogos',
+        detalle: `Renglones incompletos en el historial de precios: ${histInc}.` },
+      { no: 19, origen: 'TABLERO', nombre: 'Padrón de socios', estado: soc19, ruta: 'socios',
+        detalle: `Padrón: ${s.activos} activos · INGRESA DATOS: ${textoDe(c.socios)} · en uso: `
+          + `${igual(exp.socios.usarPadron, 'Sí') ? 'el padrón' : 'INGRESA DATOS'} · renglones con observación: ${s.conObservacion}` },
+      { no: 21, origen: 'TABLERO', nombre: 'Proveedores con carta compromiso vigente',
+        estado: provPend > 0 ? 'REVISAR' : 'OK', ruta: 'proveedores',
+        detalle: `Proveedores: ${conNombre} · vigentes: ${vigentes} · con pendiente: ${provPend}` },
+    ];
+  }
+
+  Coop.calculos = {
+    calendario, rotuloSemana, fechaRenovacion, propuestaCambioConsejo,
+    valorCertificado, socios, numSocios, textoSociosCiclo,
+    controlHistorial, historialDuplicado, propuestaFirmaCarta, efectivo, proveedores, controles,
+  };
+})(globalThis.Coop = globalThis.Coop || {});
+</script>
+  <script>
+/* almacenamiento.js — Guarda los expedientes solo en este navegador (IndexedDB; si no está disponible,
+   localStorage). Nada sale del equipo. También arma e interpreta los respaldos .json. */
+(function (Coop) {
+  'use strict';
+
+  const BD = 'cooperativa-escolar';
+  const VERSION_BD = 1;
+  const PREFIJO_LS = 'coop.bd.';
+  const ID_APP = 'control-cooperativas-escolares-cdmx';
+
+  let bd = null;
+  let modo = null; // 'indexeddb' | 'localstorage'
+
+  function abrirIndexedDB() {
+    return new Promise((resolver, rechazar) => {
+      if (!globalThis.indexedDB) { rechazar(new Error('Sin IndexedDB')); return; }
+      const sol = indexedDB.open(BD, VERSION_BD);
+      sol.onupgradeneeded = () => {
+        const db = sol.result;
+        if (!db.objectStoreNames.contains('expedientes')) db.createObjectStore('expedientes', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
+      };
+      sol.onsuccess = () => resolver(sol.result);
+      sol.onerror = () => rechazar(sol.error);
+      sol.onblocked = () => rechazar(new Error('La base de datos está bloqueada por otra pestaña.'));
+    });
+  }
+
+  async function iniciar() {
+    try {
+      bd = await abrirIndexedDB();
+      modo = 'indexeddb';
+    } catch (e) {
+      localStorage.setItem(PREFIJO_LS + 'prueba', '1');
+      localStorage.removeItem(PREFIJO_LS + 'prueba');
+      modo = 'localstorage';
+    }
+    return modo;
+  }
+
+  function operacion(almacen, tipo, fn) {
+    return new Promise((resolver, rechazar) => {
+      const tx = bd.transaction(almacen, tipo);
+      const sol = fn(tx.objectStore(almacen));
+      tx.oncomplete = () => resolver(sol ? sol.result : undefined);
+      tx.onerror = () => rechazar(tx.error);
+      tx.onabort = () => rechazar(tx.error || new Error('Operación cancelada'));
+    });
+  }
+
+  const lsLeer = (k) => { const v = localStorage.getItem(PREFIJO_LS + k); return v === null ? undefined : JSON.parse(v); };
+  const lsEscribir = (k, v) => localStorage.setItem(PREFIJO_LS + k, JSON.stringify(v));
+
+  async function listar() {
+    if (modo === 'indexeddb') return operacion('expedientes', 'readonly', (s) => s.getAll());
+    return (lsLeer('indice') || []).map((id) => lsLeer('exp.' + id)).filter(Boolean);
+  }
+
+  async function leer(id) {
+    if (modo === 'indexeddb') return operacion('expedientes', 'readonly', (s) => s.get(id));
+    return lsLeer('exp.' + id);
+  }
+
+  async function guardar(exp) {
+    if (modo === 'indexeddb') return operacion('expedientes', 'readwrite', (s) => s.put(exp));
+    const indice = lsLeer('indice') || [];
+    if (!indice.includes(exp.id)) { indice.push(exp.id); lsEscribir('indice', indice); }
+    lsEscribir('exp.' + exp.id, exp);
+    return undefined;
+  }
+
+  async function borrar(id) {
+    if (modo === 'indexeddb') return operacion('expedientes', 'readwrite', (s) => s.delete(id));
+    lsEscribir('indice', (lsLeer('indice') || []).filter((x) => x !== id));
+    localStorage.removeItem(PREFIJO_LS + 'exp.' + id);
+    return undefined;
+  }
+
+  async function leerMeta(clave) {
+    if (modo === 'indexeddb') return operacion('meta', 'readonly', (s) => s.get(clave));
+    return lsLeer('meta.' + clave);
+  }
+
+  async function guardarMeta(clave, valor) {
+    if (modo === 'indexeddb') return operacion('meta', 'readwrite', (s) => s.put(valor, clave));
+    lsEscribir('meta.' + clave, valor);
+    return undefined;
+  }
+
+  /* ---------- Respaldos ---------- */
+
+  function armarRespaldo(expedientes) {
+    return {
+      app: ID_APP,
+      versionEsquema: Coop.modelo.VERSION_ESQUEMA,
+      exportado: new Date().toISOString(),
+      expedientes,
+    };
+  }
+
+  /* Revisa un respaldo y devuelve sus expedientes ya migrados a la versión actual (lanza un error claro si no sirve). */
+  function interpretarRespaldo(texto) {
+    let datos;
+    try { datos = JSON.parse(texto); } catch (e) { throw new Error('El archivo no es un respaldo válido: no se pudo leer como JSON.'); }
+    if (!datos || datos.app !== ID_APP || !Array.isArray(datos.expedientes)) {
+      throw new Error('El archivo no es un respaldo de esta app (Control de Cooperativas Escolares).');
+    }
+    return { exportado: datos.exportado || '', expedientes: datos.expedientes.map((e) => Coop.modelo.migrar(e)) };
+  }
+
+  function nombreRespaldo(fecha = new Date()) {
+    const p = (n) => String(n).padStart(2, '0');
+    return `respaldo-cooperativa_${fecha.getFullYear()}-${p(fecha.getMonth() + 1)}-${p(fecha.getDate())}_${p(fecha.getHours())}${p(fecha.getMinutes())}.json`;
+  }
+
+  Coop.almacen = {
+    iniciar, listar, leer, guardar, borrar, leerMeta, guardarMeta,
+    armarRespaldo, interpretarRespaldo, nombreRespaldo,
+    modo: () => modo,
+  };
+})(globalThis.Coop = globalThis.Coop || {});
+</script>
+  <script>
+/* ui.js — Campos de captura con el código de colores del Excel, lectura y validación de lo capturado,
+   y actualización de los datos calculados sin volver a dibujar la pantalla. */
+(function (Coop) {
+  'use strict';
+  const F = Coop.f;
+
+  const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  /* ---------- Rutas dentro del expediente: «socios.lista.3.nombre» ---------- */
+  function leerRuta(obj, ruta) {
+    return ruta.split('.').reduce((o, k) => (o === undefined || o === null ? undefined : o[k]), obj);
+  }
+  function escribirRuta(obj, ruta, valor) {
+    const partes = ruta.split('.');
+    const ultimo = partes.pop();
+    const destino = partes.reduce((o, k) => o[k], obj);
+    destino[ultimo] = valor;
+  }
+
+  /* ---------- Reglas por campo ----------
+     Cada módulo registra reglas con un patrón de ruta. Una regla puede tener:
+     validar(valor, exp, ruta) → null | { mensaje, bloquea }   (bloquea = Excel rechaza el dato)
+     propuesta(exp, ruta) → valor propuesto (campo con propuesta: null en el modelo = usar la propuesta) */
+  const reglas = [];
+  function registrarRegla(patron, regla) { reglas.push({ patron, ...regla }); }
+  const reglaDe = (ruta) => reglas.find((r) => r.patron.test(ruta));
+
+  const MENSAJE_TIPO = {
+    fecha: 'Escriba una fecha válida (dd/mm/aaaa).',
+    entero: 'Escriba un número entero.',
+    decimal: 'Escriba un número.',
+    moneda: 'Escriba un importe, por ejemplo 1,250.50.',
+  };
+
+  function aTexto(valor, tipo) {
+    if (F.vacio(valor)) return '';
+    if (tipo === 'fecha') return F.fecha(valor);
+    if (tipo === 'moneda') return F.moneda(valor);
+    return String(valor);
+  }
+
+  /* Lee lo escrito según el tipo. Devuelve { ok, valor } o { ok:false, mensaje }. */
+  function leer(texto, tipo) {
+    if (tipo === 'fecha') {
+      const v = F.leerFecha(texto);
+      return v === null ? { ok: false, mensaje: MENSAJE_TIPO.fecha } : { ok: true, valor: v };
+    }
+    if (tipo === 'entero' || tipo === 'decimal' || tipo === 'moneda') {
+      const v = F.leerNumero(texto);
+      if (v === null) return { ok: false, mensaje: MENSAJE_TIPO[tipo] };
+      if (tipo === 'entero' && v !== '' && !Number.isInteger(v)) return { ok: false, mensaje: MENSAJE_TIPO.entero };
+      return { ok: true, valor: v };
+    }
+    return { ok: true, valor: String(texto).replace(/\s+$/, '') };
+  }
+
+  let contador = 0;
+
+  /* Dibuja un campo de captura (amarillo). def = { ruta, tipo, etiqueta, oculta, opciones, ancho, ayuda } */
+  function campo(def, exp) {
+    const id = 'c' + (++contador);
+    const tipo = def.tipo || 'texto';
+    const regla = reglaDe(def.ruta);
+    const guardado = leerRuta(exp, def.ruta);
+    const conPropuesta = regla && regla.propuesta;
+    const usaPropuesta = conPropuesta && (guardado === null || guardado === undefined);
+    const valor = usaPropuesta ? regla.propuesta(exp, def.ruta) : guardado;
+    const etiqueta = def.oculta
+      ? `<label class="vh" for="${id}">${esc(def.etiqueta)}</label>`
+      : `<label for="${id}">${esc(def.etiqueta)}</label>`;
+    const atributos = `id="${id}" data-ruta="${esc(def.ruta)}" data-tipo="${tipo}" aria-describedby="${id}-m"`
+      + (def.ancho ? ` style="width:${def.ancho}"` : '');
+    let control;
+    if (tipo === 'lista') {
+      const opciones = def.opciones.slice();
+      const fuera = !F.vacio(valor) && !opciones.some((o) => o === valor);
+      control = `<select ${atributos}><option value=""></option>`
+        + opciones.map((o) => `<option${o === valor ? ' selected' : ''}>${esc(o)}</option>`).join('')
+        + (fuera ? `<option selected value="${esc(valor)}">${esc(valor)} (no está en la lista)</option>` : '')
+        + '</select>';
+    } else {
+      const lista = tipo === 'sugerencias' ? ` list="${id}-l"` : '';
+      const modoTeclado = ['entero', 'decimal', 'moneda'].includes(tipo) ? ' inputmode="decimal"' : (tipo === 'fecha' ? ' inputmode="numeric" placeholder="dd/mm/aaaa"' : '');
+      control = `<input type="text" ${atributos}${lista}${modoTeclado} value="${esc(aTexto(valor, tipo))}"`
+        + `${usaPropuesta ? ' class="propuesto" title="Valor propuesto: puede escribir encima"' : ''} autocomplete="off">`;
+      if (tipo === 'sugerencias') control += `<datalist id="${id}-l">${def.opciones.map((o) => `<option value="${esc(o)}">`).join('')}</datalist>`;
+    }
+    const restablecer = conPropuesta
+      ? `<button type="button" class="restablecer" data-restablecer="${esc(def.ruta)}" title="Restablecer propuesta"`
+        + ` aria-label="Restablecer la propuesta de ${esc(def.etiqueta)}"${usaPropuesta ? ' hidden' : ''}>↺</button>`
+      : '';
+    const ayuda = def.ayuda ? `<span class="ayuda">${esc(def.ayuda)}</span>` : '';
+    return `<span class="campo${def.clase ? ' ' + def.clase : ''}">${etiqueta}<span class="control">${control}${restablecer}</span>`
+      + `<span class="msg" id="${id}-m" role="status"></span>${ayuda}</span>`;
+  }
+
+  /* Dato calculado (solo lectura, sin cuadro). Se actualiza con refrescar() mediante su clave. */
+  const calc = (clave, contenido = '', clase = '') => `<span class="calc ${clase}" data-calc="${esc(clave)}">${esc(contenido)}</span>`;
+  /* Bloque calculado que se vuelve a dibujar completo (por ejemplo, el calendario). */
+  const calcBloque = (clave, html = '') => `<div class="calc-bloque" data-calc="${esc(clave)}">${html}</div>`;
+
+  function mostrarMensaje(el, texto, tipo) {
+    const msg = document.getElementById(el.id + '-m');
+    el.classList.toggle('aviso', tipo === 'aviso');
+    el.classList.toggle('error', tipo === 'error');
+    if (msg) { msg.textContent = texto || ''; msg.className = 'msg' + (tipo ? ' ' + tipo : ''); }
+    if (texto) el.setAttribute('title', texto); else el.removeAttribute('title');
+  }
+
+  /* Vuelve a evaluar avisos y propuestas de todos los campos visibles. */
+  function revisarCampos(raiz, exp) {
+    raiz.querySelectorAll('[data-ruta]').forEach((el) => {
+      const ruta = el.dataset.ruta;
+      const regla = reglaDe(ruta);
+      const guardado = leerRuta(exp, ruta);
+      if (regla && regla.propuesta && (guardado === null || guardado === undefined) && document.activeElement !== el) {
+        el.value = aTexto(regla.propuesta(exp, ruta), el.dataset.tipo);
+        el.classList.add('propuesto');
+      }
+      const r = regla && regla.validar ? regla.validar(guardado, exp, ruta) : null;
+      if (!el.classList.contains('error')) mostrarMensaje(el, r ? r.mensaje : '', r ? 'aviso' : '');
+    });
+  }
+
+  function refrescarCalculados(raiz, valores) {
+    raiz.querySelectorAll('[data-calc]').forEach((el) => {
+      const v = valores[el.dataset.calc];
+      if (v === undefined) return;
+      const dato = typeof v === 'object' && v !== null ? v : { t: v };
+      if (dato.h !== undefined) el.innerHTML = dato.h; else el.textContent = dato.t ?? '';
+      el.className = (el.tagName === 'DIV' ? 'calc-bloque ' : 'calc ') + (dato.c || '');
+    });
+  }
+
+  /* Atiende un cambio en un campo. Devuelve true si el expediente cambió. */
+  function procesarCambio(el, exp) {
+    const ruta = el.dataset.ruta;
+    const tipo = el.dataset.tipo;
+    const regla = reglaDe(ruta);
+    const anterior = leerRuta(exp, ruta);
+    const lectura = leer(el.value, tipo === 'lista' || tipo === 'sugerencias' ? 'texto' : tipo);
+    /* Como en Excel, un dato rechazado no se guarda: el campo vuelve a mostrar lo que tenía. */
+    const rechazar = (mensaje) => {
+      const usaPropuesta = regla && regla.propuesta && (anterior === null || anterior === undefined);
+      el.value = aTexto(usaPropuesta ? regla.propuesta(exp, ruta) : anterior, tipo === 'lista' ? 'texto' : tipo);
+      mostrarMensaje(el, `«${texto}» no se guardó: ${mensaje}`, 'error');
+      return false;
+    };
+    const texto = el.value;
+    if (!lectura.ok) return rechazar(lectura.mensaje);
+    const v = regla && regla.validar ? regla.validar(lectura.valor, exp, ruta) : null;
+    if (v && v.bloquea) return rechazar(v.mensaje);
+    el.classList.remove('propuesto', 'error');
+    if (lectura.valor === anterior) { mostrarMensaje(el, v ? v.mensaje : '', v ? 'aviso' : ''); return false; }
+    escribirRuta(exp, ruta, lectura.valor);
+    if (tipo !== 'lista') el.value = aTexto(lectura.valor, tipo);
+    const boton = el.parentElement.querySelector('[data-restablecer]');
+    if (boton) boton.hidden = false;
+    mostrarMensaje(el, v ? v.mensaje : '', v ? 'aviso' : '');
+    return true;
+  }
+
+  function restablecer(boton, exp) {
+    const ruta = boton.dataset.restablecer;
+    escribirRuta(exp, ruta, null);
+    const el = boton.parentElement.querySelector('[data-ruta]');
+    el.classList.remove('error');
+    el.value = aTexto(reglaDe(ruta).propuesta(exp, ruta), el.dataset.tipo);
+    el.classList.add('propuesto');
+    boton.hidden = true;
+  }
+
+  /* Ventana de diálogo accesible (<dialog>). botones = [{ texto, valor, clase }]. Devuelve el valor elegido. */
+  function dialogo(titulo, cuerpoHtml, botones) {
+    return new Promise((resolver) => {
+      const d = document.createElement('dialog');
+      d.className = 'dialogo';
+      d.setAttribute('aria-labelledby', 'dlg-t');
+      d.innerHTML = `<h2 id="dlg-t">${esc(titulo)}</h2><div class="dlg-cuerpo">${cuerpoHtml}</div>`
+        + `<div class="dlg-botones">${botones.map((b, i) => `<button type="button" data-i="${i}" class="${b.clase || ''}">${esc(b.texto)}</button>`).join('')}</div>`;
+      document.body.appendChild(d);
+      d.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-i]');
+        if (!b) return;
+        const valor = botones[+b.dataset.i].valor;
+        const datos = Object.fromEntries([...d.querySelectorAll('[name]')].map((x) => [x.name, x.type === 'checkbox' ? x.checked : x.value]));
+        d.close(); d.remove();
+        resolver({ valor, datos });
+      });
+      d.addEventListener('cancel', () => { d.remove(); resolver({ valor: null, datos: {} }); });
+      d.showModal();
+    });
+  }
+
+  function aviso(texto, tipo = 'info') {
+    const zona = document.getElementById('avisos-flotantes');
+    if (!zona) return;
+    const el = document.createElement('div');
+    el.className = 'flotante ' + tipo;
+    el.setAttribute('role', 'status');
+    el.textContent = texto;
+    zona.appendChild(el);
+    setTimeout(() => el.remove(), 6000);
+  }
+
+  /* Registro de módulos (pantallas). Cada módulo: { id, titulo, hoja, grupo, render(exp), calculados(exp), redibujarSi? } */
+  const registro = new Map();
+  Coop.modulos = {
+    registrar: (m) => registro.set(m.id, m),
+    obtener: (id) => registro.get(id),
+  };
+
+  Coop.ui = {
+    esc, leerRuta, escribirRuta, registrarRegla, campo, calc, calcBloque, revisarCampos, refrescarCalculados,
+    procesarCambio, restablecer, dialogo, aviso,
+  };
+})(globalThis.Coop = globalThis.Coop || {});
+</script>
+  <script>
+/* modulos/tablero.js — Pantalla de inicio. En la Fase 1 muestra los controles cuyos datos ya se capturan
+   en la app (RESUMEN Y CONTROLES 1, 2 y 5; TABLERO 19 y 21). El tablero completo llega en la Fase 4. */
+(function (Coop) {
+  'use strict';
+  const { ui, f: F, calculos: C } = Coop;
+  const { esc, calcBloque } = ui;
+
+  const CLASE = { OK: 'bien', CORRECTO: 'bien', INFO: 'info', PENDIENTE: 'pendiente', 'PRÓXIMO': 'pendiente', REVISAR: 'mal' };
+
+  function tabla(exp) {
+    const filas = C.controles(exp).map((c) => {
+      const destino = Coop.modulos.obtener(c.ruta);
+      return `<tr><td class="num">${c.no}</td><td>${esc(c.nombre)}<span class="origen">${esc(c.origen)}</span></td>`
+        + `<td><span class="estado ${CLASE[c.estado] || ''}">${esc(c.estado)}</span></td><td>${esc(c.detalle)}</td>`
+        + `<td><a href="#/${c.ruta}">Corregir en ${esc(destino ? destino.titulo : c.ruta)}</a></td></tr>`;
+    }).join('');
+    return `<div class="tabla-desplazable"><table class="tabla"><thead><tr><th scope="col">No.</th><th scope="col">Control</th>`
+      + `<th scope="col">Estado</th><th scope="col">Detalle</th><th scope="col">Dónde se corrige</th></tr></thead><tbody>${filas}</tbody></table></div>`;
+  }
+
+  function render(exp) {
+    const c = exp.ciclo;
+    const titulo = [c.cooperativa && `Cooperativa Escolar “${c.cooperativa}”`, c.escuela && `Escuela Primaria “${c.escuela}”`,
+      c.cct && `CCT ${c.cct}`, c.ciclo && `Ciclo ${c.ciclo}`].filter(Boolean).join(' · ');
+    return `
+      <p class="intro">${esc(titulo || 'Capture los datos de la escuela en Ingresa datos.')}</p>
+      <section aria-labelledby="t-ctl"><h2 id="t-ctl">Controles</h2>
+        <p class="nota">Vista parcial: aquí aparecen los controles cuyos datos ya se capturan en la app. Los demás controles y el semáforo completo se agregan conforme se construyen sus módulos.</p>
+        ${calcBloque('controles')}</section>
+      <section aria-labelledby="t-hoy"><h2 id="t-hoy">Fecha de referencia</h2><p>${esc('Hoy: ' + F.fechaEnLetra(F.hoySerial()))}. Los controles que dependen de la fecha (por ejemplo, la vigencia de las cartas compromiso) usan este día.</p></section>`;
+  }
+
+  const calculados = (exp) => ({ controles: { h: tabla(exp) } });
+
+  Coop.modulos.registrar({ id: 'tablero', titulo: 'Tablero', hoja: 'TABLERO', grupo: 'Control', render, calculados });
+})(globalThis.Coop = globalThis.Coop || {});
+</script>
+  <script>
+/* modulos/ciclo.js — INGRESA DATOS: datos del ciclo, mesa directiva, proveedor de alimentos,
+   periodos sin venta y calendario calculado (H6:X58). */
+(function (Coop) {
+  'use strict';
+  const { ui, f: F, calculos: C } = Coop;
+  const { esc, campo, calc, calcBloque } = ui;
+
+  /* Validaciones del Excel. En esta hoja ninguna bloquea: Excel guarda el dato aunque no cumpla. */
+  ui.registrarRegla(/^ciclo\.primerDia$/, {
+    validar: (v) => (F.serialDeIso(v) !== null && F.partes(F.serialDeIso(v)).semana !== 1
+      ? { mensaje: 'El primer día de ventas debe ser un lunes.' } : null),
+  });
+  ui.registrarRegla(/^ciclo\.ultimoDia$/, {
+    validar: (v, exp) => {
+      if (F.vacio(v)) return null;
+      const ini = F.serialDeIso(exp.ciclo.primerDia);
+      return F.serialDeIso(v) > (ini ?? 0) ? null : { mensaje: 'El último día de ventas debe ser posterior al primero.' };
+    },
+  });
+  ui.registrarRegla(/^ciclo\.periodos\.\d+\.hasta$/, {
+    validar: (v, exp, ruta) => {
+      if (F.vacio(v)) return null;
+      const i = +ruta.split('.')[2];
+      const desde = F.serialDeIso(exp.ciclo.periodos[i].desde);
+      return F.serialDeIso(v) >= (desde ?? 0) ? null
+        : { mensaje: "La fecha 'Hasta' debe ser igual o posterior a 'Desde'. Para un solo día capture la misma fecha." };
+    },
+  });
+  ui.registrarRegla(/^ciclo\.firmantes\.4\.saliente$/, { propuesta: (exp) => C.propuestaCambioConsejo(exp) });
+
+  const DATOS = [
+    ['ciclo', 'Ciclo escolar', 'texto', 'Texto, por ejemplo 2027-2028.'],
+    ['primerDia', 'Primer día de ventas (debe ser lunes)', 'fecha', 'Primer día de clases del calendario oficial del ciclo (debe ser lunes).'],
+    ['ultimoDia', 'Último día de ventas', 'fecha', 'Último día de clases del calendario oficial del ciclo.'],
+    ['escuela', 'Escuela (nombre)', 'texto', ''],
+    ['cct', 'CCT', 'texto', ''],
+    ['cooperativa', 'Nombre de la cooperativa', 'texto', ''],
+    ['clave', 'Clave de la cooperativa', 'texto', ''],
+    ['registro', 'No. de registro', 'texto', ''],
+    ['socios', 'No. de socios', 'entero', null],
+    ['efectivoAnterior', 'Efectivo anterior (saldo con que inicia el ciclo)', 'moneda', 'Saldo final del ciclo anterior según arqueo y estado de cuenta.'],
+    ['ciudad', 'Ciudad', 'texto', ''],
+    ['diasClase', 'Días de clase oficiales del ciclo', 'entero', 'Dato de referencia del calendario SEP.'],
+    ['fotocopiadora', '¿La escuela cuenta con fotocopiadora?', 'lista', 'Si es «Sí», las fotocopias de la Dirección no se cubren con el 10 % (Orientaciones 2025-2026, «Apoyo del 10 %», inciso a).'],
+  ];
+
+  const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
+
+  function tablaCalendario(exp) {
+    const cal = C.calendario(exp);
+    const filas = cal.semanas.map((s) => {
+      if (s.lunes === null) return `<tr class="sin-semana"><td>${s.h}</td><td colspan="11"></td></tr>`;
+      const dias = s.dias.map((d, k) => (d === 1
+        ? '<td class="dia-venta" aria-label="con venta">✔</td>'
+        : `<td class="dia-sin" title="${esc(s.motivos[k])}"><span class="vh">sin venta: </span>${esc(s.motivos[k])}</td>`)).join('');
+      return `<tr><td>${s.h}</td><td>${F.fechaDeSerial(s.lunes)}</td><td>${F.fechaDeSerial(s.viernes)}</td>${dias}`
+        + `<td class="num">${s.diasConVenta}</td><td class="num">${s.semanaVenta}</td><td>${esc(s.rotulo)}</td>`
+        + `<td>${F.fechaDeSerial(s.ultimoDia === '' ? '' : s.ultimoDia)}</td></tr>`;
+    }).join('');
+    return `<div class="tabla-desplazable"><table class="tabla calendario"><caption class="vh">Calendario calculado</caption><thead><tr>`
+      + '<th scope="col">Sem. cal.</th><th scope="col">Lunes</th><th scope="col">Viernes</th>'
+      + DIAS.map((d) => `<th scope="col">${d}</th>`).join('')
+      + '<th scope="col">Días con venta</th><th scope="col">Semana de venta No.</th><th scope="col">Rótulo de la semana</th><th scope="col">Último día con venta</th>'
+      + `</tr></thead><tbody>${filas}</tbody></table></div><p class="totales">${esc(cal.resumen)}</p>`;
+  }
+
+  function render(exp) {
+    const c = exp.ciclo;
+    const datos = DATOS.map(([k, etiqueta, tipo, ayuda]) => {
+      const def = { ruta: `ciclo.${k}`, tipo, etiqueta, ayuda: ayuda || '' };
+      if (tipo === 'lista') def.opciones = ['Sí', 'No'];
+      const extra = ayuda === null ? calc('textoSocios', '', 'nota') : '';
+      return `<div class="fila-dato">${campo(def, exp)}${extra}</div>`;
+    }).join('');
+
+    const firmas = Coop.modelo.FUNCIONES_FIRMA.map((fun, i) => `<tr><th scope="row">${esc(fun)}</th>`
+      + `<td>${campo({ ruta: `ciclo.firmantes.${i}.nombre`, etiqueta: `${fun}: nombre (como se firma)`, oculta: true }, exp)}</td>`
+      + `<td>${campo({ ruta: `ciclo.firmantes.${i}.cargo`, etiqueta: `${fun}: cargo que aparece bajo la firma`, oculta: true }, exp)}</td>`
+      + `<td>${campo({ ruta: `ciclo.firmantes.${i}.saliente`, etiqueta: i === 4 ? 'Consejo saliente: renglón de la Dirección (dato informativo)' : `${fun}: Consejo saliente`, oculta: true }, exp)}</td></tr>`).join('');
+
+    const prov = [['nombre', 'Nombre del proveedor'], ['domicilio', 'Domicilio'], ['rfc', 'RFC'], ['telefono', 'Teléfono']]
+      .map(([k, e]) => `<div class="fila-dato">${campo({ ruta: `ciclo.proveedor.${k}`, etiqueta: e, ayuda: '' }, exp)}</div>`).join('');
+
+    const n = Coop.app.filasVisibles('periodos', c.periodos, (p) => F.vacio(p.desde) && F.vacio(p.hasta) && F.vacio(p.motivo) && F.vacio(p.fuente), 5);
+    const periodos = c.periodos.slice(0, n).map((p, i) => `<tr><td class="num">${i + 1}</td>`
+      + `<td>${campo({ ruta: `ciclo.periodos.${i}.desde`, tipo: 'fecha', etiqueta: `Periodo ${i + 1}: desde`, oculta: true }, exp)}</td>`
+      + `<td>${campo({ ruta: `ciclo.periodos.${i}.hasta`, tipo: 'fecha', etiqueta: `Periodo ${i + 1}: hasta`, oculta: true }, exp)}</td>`
+      + `<td>${campo({ ruta: `ciclo.periodos.${i}.motivo`, etiqueta: `Periodo ${i + 1}: motivo`, oculta: true }, exp)}</td>`
+      + `<td>${campo({ ruta: `ciclo.periodos.${i}.fuente`, etiqueta: `Periodo ${i + 1}: fuente`, oculta: true }, exp)}</td></tr>`).join('');
+
+    return `
+      <p class="intro">Capture solo en las celdas amarillas. Todo lo demás (fechas de cada semana, rótulos, firmas, folios y controles) se recalcula a partir de esta pantalla.</p>
+      <section aria-labelledby="t-datos"><h2 id="t-datos">Datos del ciclo</h2><div class="rejilla-datos">${datos}</div></section>
+      <section aria-labelledby="t-mesa"><h2 id="t-mesa">Mesa directiva y firmas del ciclo</h2>
+        <div class="tabla-desplazable"><table class="tabla"><thead><tr><th scope="col">Función</th><th scope="col">Nombre (como se firma)</th>
+        <th scope="col">Cargo que aparece bajo la firma</th><th scope="col">Consejo saliente (firma lo fechado antes de la Ordinaria de renovación)</th></tr></thead>
+        <tbody>${firmas}</tbody></table></div></section>
+      <section aria-labelledby="t-prov"><h2 id="t-prov">Proveedor de alimentos (aparece en las notas de remisión)</h2><div class="rejilla-datos">${prov}</div></section>
+      <section aria-labelledby="t-per"><h2 id="t-per">Periodos sin venta (festivos, CTE, registro de calificaciones, vacaciones)</h2>
+        <p class="nota">Un solo día = misma fecha en Desde y Hasta. Capacidad: ${Coop.modelo.CAPACIDAD.periodos} renglones.</p>
+        <div class="tabla-desplazable"><table class="tabla"><thead><tr><th scope="col">No.</th><th scope="col">Desde</th><th scope="col">Hasta</th><th scope="col">Motivo</th><th scope="col">Fuente</th></tr></thead>
+        <tbody>${periodos}</tbody></table></div>${Coop.app.botonAgregar('periodos', n, c.periodos.length)}</section>
+      <section aria-labelledby="t-cal"><h2 id="t-cal">Calendario calculado (no se captura)</h2>${calcBloque('calendario')}</section>`;
+  }
+
+  function calculados(exp) {
+    return { textoSocios: C.textoSociosCiclo(exp), calendario: { h: tablaCalendario(exp) } };
+  }
+
+  Coop.modulos.registrar({ id: 'ciclo', titulo: 'Ingresa datos', hoja: 'INGRESA DATOS', grupo: 'Captura', render, calculados });
+})(globalThis.Coop = globalThis.Coop || {});
+</script>
+  <script>
+/* modulos/catalogos.js — CATÁLOGOS: productos (8 lugares, el agua en el 7), historial de precios
+   (B20:G219), conceptos de movimiento (I6:Q45), clasificaciones fijas y leyenda de recordatorio. */
+(function (Coop) {
+  'use strict';
+  const { ui, f: F, calculos: C, modelo: M } = Coop;
+  const { esc, campo, calc } = ui;
+
+  const CLASES = [
+    ['Incremento al capital social', 'INGRESO', 'AC'],
+    ['Intereses bancarios', 'INGRESO', 'IB'],
+    ['Gasto con cargo al fondo de reserva', 'EGRESO', 'FR'],
+    ['Gasto con cargo al fondo social', 'EGRESO', 'FS'],
+    ['Gasto de administración', 'EGRESO', 'GA'],
+    ['Entrega del fondo repartible', 'EGRESO', 'RP'],
+    ['Devolución de certificados de aportación', 'EGRESO', 'DC'],
+  ];
+  const TRATAMIENTOS = ['Requiere acta previa (autorización)', 'Reconocimiento (acta posterior al gasto)',
+    '10 % de apoyo a la Dirección (sin acta)', 'Gasto de administración (sin acta)', 'Ingreso'];
+  const PERIODICIDAD = ['Semanal', 'Mensual', 'Sin fecha fija'];
+  const PERSONAS = ['(Presidencia)', '(Tesorería)', '(Dirección)', '(Comité de Vigilancia)', '(Educación Cooperativa)'];
+  const LEYENDA = 'Selecciona esta celda una vez y borra la información para que escribas el dato que le corresponde';
+  const MENSAJE_EXCEL = 'Este valor no coincide con las restricciones de validación de datos definidas para esta celda.';
+
+  const nombresProductos = (exp) => exp.catalogos.productos.map((p) => p.nombre).filter((n) => !F.vacio(n));
+  const fueraDeLista = (v, lista) => !F.vacio(v) && !lista.some((o) => F.igual(o, v));
+
+  /* Validaciones del Excel. Solo «Fecha sugerida» bloquea; las demás muestran su mensaje como aviso. */
+  ui.registrarRegla(/^catalogos\.productos\.\d+\.nombre$/, {
+    validar: (v, exp, ruta) => {
+      if (F.vacio(v)) return null;
+      const i = +ruta.split('.')[2];
+      const repetido = exp.catalogos.productos.some((p, j) => j !== i && F.igual(p.nombre, v));
+      return repetido ? { mensaje: 'Ese producto ya existe en la lista.' } : null;
+    },
+  });
+  ui.registrarRegla(/^catalogos\.productos\.\d+\.origen$/, {
+    validar: (v) => (fueraDeLista(v, ['Historial de precios']) ? { mensaje: 'Elija una opción de la lista.' } : null),
+  });
+  ui.registrarRegla(/^catalogos\.historial\.\d+\.producto$/, {
+    validar: (v, exp) => (fueraDeLista(v, nombresProductos(exp)) ? { mensaje: 'Elija un producto del catálogo.' } : null),
+  });
+  ui.registrarRegla(/^catalogos\.historial\.\d+\.(precio|costo)$/, {
+    validar: (v) => (typeof v === 'number' && v < 0 ? { mensaje: 'Capture un importe válido.' } : null),
+  });
+  ui.registrarRegla(/^catalogos\.conceptos\.\d+\.concepto$/, {
+    validar: (v, exp, ruta) => {
+      if (F.vacio(v)) return null;
+      const i = +ruta.split('.')[2];
+      return exp.catalogos.conceptos.some((c, j) => j !== i && F.igual(c.concepto, v)) ? { mensaje: 'Ese concepto ya existe.' } : null;
+    },
+  });
+  ui.registrarRegla(/^catalogos\.conceptos\.\d+\.clasificacion$/, {
+    validar: (v) => (fueraDeLista(v, CLASES.map((c) => c[0])) ? { mensaje: 'Elija una clasificación de la lista.' } : null),
+  });
+  ui.registrarRegla(/^catalogos\.conceptos\.\d+\.fechaSugerida$/, {
+    validar: (v) => (fueraDeLista(v, PERIODICIDAD) ? { mensaje: MENSAJE_EXCEL, bloquea: true } : null),
+  });
+
+  function render(exp) {
+    const cat = exp.catalogos;
+    const productos = cat.productos.map((p, i) => {
+      if (i === M.LUGAR_AGUA) {
+        return `<tr class="fijo"><td class="num">${i + 1}</td><td>AGUA</td><td>Compras de agua</td><td class="nota">Lugar reservado para el agua, inmediatamente después del último alimento: se vende por lote. El costo y las botellas salen de NOTAS DE AGUA y se asientan en la semana en que se termina cada lote; ese renglón recibe número de nota solo cuando el lote está terminado.</td></tr>`;
+      }
+      return `<tr><td class="num">${i + 1}</td>`
+        + `<td>${campo({ ruta: `catalogos.productos.${i}.nombre`, etiqueta: `Producto ${i + 1}: nombre`, oculta: true }, exp)}</td>`
+        + `<td>${campo({ ruta: `catalogos.productos.${i}.origen`, tipo: 'lista', opciones: ['Historial de precios'], etiqueta: `Producto ${i + 1}: origen del costo`, oculta: true }, exp)}</td>`
+        + `<td>${campo({ ruta: `catalogos.productos.${i}.observacion`, etiqueta: `Producto ${i + 1}: observación`, oculta: true }, exp)}</td></tr>`;
+    }).join('');
+
+    const prods = nombresProductos(exp);
+    const nh = Coop.app.filasVisibles('historial', cat.historial, (h) => ['producto', 'fecha', 'precio', 'costo', 'fuente'].every((k) => F.vacio(h[k])), 10);
+    const historial = cat.historial.slice(0, nh).map((h, i) => `<tr><td class="num">${i + 1}</td>`
+      + `<td>${campo({ ruta: `catalogos.historial.${i}.producto`, tipo: 'lista', opciones: prods, etiqueta: `Precio ${i + 1}: producto`, oculta: true }, exp)}</td>`
+      + `<td>${campo({ ruta: `catalogos.historial.${i}.fecha`, tipo: 'fecha', etiqueta: `Precio ${i + 1}: vigente desde`, oculta: true }, exp)}</td>`
+      + `<td>${campo({ ruta: `catalogos.historial.${i}.precio`, tipo: 'moneda', etiqueta: `Precio ${i + 1}: precio de venta`, oculta: true }, exp)}</td>`
+      + `<td>${campo({ ruta: `catalogos.historial.${i}.costo`, tipo: 'moneda', etiqueta: `Precio ${i + 1}: costo unitario`, oculta: true }, exp)}</td>`
+      + `<td>${campo({ ruta: `catalogos.historial.${i}.fuente`, etiqueta: `Precio ${i + 1}: fuente u observación`, oculta: true }, exp)}</td>`
+      + `<td>${calc(`hist.${i}`)}</td></tr>`).join('');
+
+    const nc = Coop.app.filasVisibles('conceptos', cat.conceptos, (c) => Object.values(c).every(F.vacio), 3);
+    const conceptos = cat.conceptos.slice(0, nc).map((c, i) => {
+      const r = `catalogos.conceptos.${i}`;
+      const e = `Concepto ${i + 1}`;
+      return `<tr><td class="num">${i + 1}</td>`
+        + `<td>${campo({ ruta: `${r}.concepto`, etiqueta: `${e}: nombre`, oculta: true, clase: 'ancho-l' }, exp)}</td>`
+        + `<td>${campo({ ruta: `${r}.clasificacion`, tipo: 'lista', opciones: CLASES.map((x) => x[0]), etiqueta: `${e}: clasificación`, oculta: true }, exp)}</td>`
+        + `<td>${campo({ ruta: `${r}.importeRef`, tipo: 'moneda', etiqueta: `${e}: importe de referencia`, oculta: true }, exp)}</td>`
+        + `<td>${campo({ ruta: `${r}.observacion`, etiqueta: `${e}: observación`, oculta: true, clase: 'ancho-l' }, exp)}</td>`
+        + `<td>${campo({ ruta: `${r}.tratamiento`, tipo: 'lista', opciones: TRATAMIENTOS, etiqueta: `${e}: tratamiento`, oculta: true }, exp)}</td>`
+        + `<td>${campo({ ruta: `${r}.fechaSugerida`, tipo: 'lista', opciones: PERIODICIDAD, etiqueta: `${e}: fecha sugerida`, oculta: true }, exp)}</td>`
+        + `<td>${campo({ ruta: `${r}.detalle`, etiqueta: `${e}: detalle predeterminado`, oculta: true }, exp)}</td>`
+        + `<td>${campo({ ruta: `${r}.persona`, tipo: 'sugerencias', opciones: PERSONAS, etiqueta: `${e}: persona predeterminada`, oculta: true }, exp)}</td></tr>`;
+    }).join('');
+
+    const clases = CLASES.map((c) => `<tr><td>${esc(c[0])}</td><td>${c[1]}</td><td>${c[2]}</td></tr>`).join('');
+
+    return `
+      <p class="intro">Los precios nunca se sobrescriben: cuando cambien, agregue un renglón nuevo con su fecha de vigencia. Así cada semana conserva el precio que tenía y el registro sigue siendo auditable.</p>
+      <section aria-labelledby="t-prod"><h2 id="t-prod">1. Productos</h2>
+        <p class="nota">8 lugares, uno por renglón del registro semanal, en el orden en que aparecerán en él; el agua ocupa el lugar 7, después de los alimentos.</p>
+        <div class="tabla-desplazable"><table class="tabla"><thead><tr><th scope="col">No.</th><th scope="col">Producto</th><th scope="col">Origen del costo</th><th scope="col">Observación</th></tr></thead>
+        <tbody>${productos}</tbody></table></div></section>
+      <section aria-labelledby="t-hist"><h2 id="t-hist">2. Historial de precios (precio de venta y costo unitario por fecha de vigencia)</h2>
+        <div class="tabla-desplazable"><table class="tabla"><thead><tr><th scope="col">No.</th><th scope="col">Producto</th><th scope="col">Vigente desde</th><th scope="col">Precio de venta</th>
+        <th scope="col">Costo unitario</th><th scope="col">Fuente / observación</th><th scope="col">Control</th></tr></thead><tbody>${historial}</tbody></table></div>
+        ${Coop.app.botonAgregar('historial', nh, cat.historial.length)}</section>
+      <section aria-labelledby="t-conc"><h2 id="t-conc">3. Conceptos de movimiento (ingresos y gastos que no son ventas)</h2>
+        <p class="nota">«Persona»: escriba un nombre o uno de los cargos entre paréntesis; los cargos se cambian solos cada ciclo con los firmantes de INGRESA DATOS. «Fecha sugerida»: Semanal propone el último día con venta de la semana siguiente al pago anterior del mismo concepto; Mensual propone el último día del mes siguiente.</p>
+        <div class="tabla-desplazable"><table class="tabla"><thead><tr><th scope="col">No.</th><th scope="col">Concepto</th><th scope="col">Clasificación</th><th scope="col">Importe de referencia</th>
+        <th scope="col">Observación</th><th scope="col">Tratamiento (acta / 10 % / administración)</th><th scope="col">Fecha sugerida en REGISTRO DE GASTOS</th>
+        <th scope="col">Detalle predeterminado</th><th scope="col">Persona que recibe o entrega (predeterminada)</th></tr></thead><tbody>${conceptos}</tbody></table></div>
+        ${Coop.app.botonAgregar('conceptos', nc, cat.conceptos.length)}</section>
+      <section aria-labelledby="t-clas"><h2 id="t-clas">4. Clasificaciones del libro (fijas)</h2>
+        <table class="tabla compacta"><thead><tr><th scope="col">Clasificación</th><th scope="col">Tipo</th><th scope="col">Prefijo de folio</th></tr></thead><tbody>${clases}</tbody></table></section>
+      <section aria-labelledby="t-ley"><h2 id="t-ley">5. Leyenda de recordatorio del REGISTRO DE GASTOS (no se modifica)</h2>
+        <p class="leyenda">${esc(LEYENDA)}</p></section>`;
+  }
+
+  function calculados(exp) {
+    const ctl = C.controlHistorial(exp);
+    const dup = C.historialDuplicado(exp);
+    const out = {};
+    ctl.forEach((t, i) => {
+      const aviso = dup[i] ? 'Hay otro precio de este producto con la misma fecha: el Excel promedia ambos. ' : '';
+      const texto = (t + (t && aviso ? ' ' : '') + aviso).trim();
+      out[`hist.${i}`] = { t: texto, c: texto ? 'alerta' : '' };
+    });
+    return out;
+  }
+
+  Coop.modulos.registrar({
+    id: 'catalogos', titulo: 'Catálogos', hoja: 'CATÁLOGOS', grupo: 'Captura', render, calculados,
+    redibujarSi: /^catalogos\.productos\.\d+\.nombre$/,
+  });
+})(globalThis.Coop = globalThis.Coop || {});
+</script>
+  <script>
+/* modulos/socios.js — SOCIOS: padrón (C7:O406), conteos (D3:M4) y columna Control (P). */
+(function (Coop) {
+  'use strict';
+  const { ui, f: F, calculos: C, modelo: M } = Coop;
+  const { campo, calc } = ui;
+
+  ui.registrarRegla(/^socios\.lista\.\d+\.certificado$/, {
+    validar: (v) => (typeof v === 'number' && (v < 0 || v > 50) ? { mensaje: 'El certificado debe estar entre $0.00 y $50.00 (validación de la celda en el Excel).' } : null),
+  });
+
+  const COLUMNAS = [
+    ['nombre', 'Nombre completo (como firma)', 'texto', null, 'ancho-l'],
+    ['tipo', 'Tipo', 'lista', ['Alumno', 'Maestro', 'Empleado']],
+    ['grupo', 'Grupo o función', 'texto'],
+    ['socio', '¿Socio?', 'lista', ['Sí', 'No']],
+    ['nuevo', '¿Nuevo en este ciclo?', 'lista', ['Sí', 'No']],
+    ['alta', 'Fecha de alta', 'fecha'],
+    ['certificado', 'Certificado ($) (vacío = valor vigente)', 'moneda'],
+    ['baja', 'Fecha de baja', 'fecha'],
+    ['devuelto', 'Certificado devuelto', 'lista', ['Sí', 'No']],
+    ['fechaDevolucion', 'Fecha de devolución', 'fecha'],
+    ['tutor', 'Madre, padre o tutor(a) que firma', 'texto', null, 'ancho-l'],
+    ['frEntregado', 'Fondo repartible entregado', 'lista', ['Sí', 'No']],
+    ['observaciones', 'Observaciones', 'texto'],
+  ];
+
+  function render(exp) {
+    const lista = exp.socios.lista;
+    const n = Coop.app.filasVisibles('socios', lista, (s) => Object.values(s).every(F.vacio), 10);
+    const filas = lista.slice(0, n).map((s, i) => `<tr><td class="num">${calc(`soc.${i}.no`)}</td>`
+      + COLUMNAS.map(([k, e, tipo, opciones, clase]) => `<td>${campo({ ruta: `socios.lista.${i}.${k}`, tipo, opciones, etiqueta: `Renglón ${i + 1}: ${e}`, oculta: true, clase }, exp)}</td>`).join('')
+      + `<td>${calc(`soc.${i}.control`)}</td></tr>`).join('');
+
+    const usar = campo({
+      ruta: 'socios.usarPadron', tipo: 'lista', opciones: ['Sí', 'No'], etiqueta: '¿Usar el padrón para el No. de socios?',
+      ayuda: 'Sí = el número de socios sale de este padrón. No = se usa el número capturado en INGRESA DATOS.',
+    }, exp);
+
+    return `
+      <p class="intro">Capture o corrija solo en las celdas amarillas. Capture a los alumnos socios y agregue a maestros y empleados socios. Con «¿Socio?» = Sí y sin fecha de baja, la persona cuenta como socio activo. «¿Nuevo en este ciclo?» = Sí la manda a la RELACIÓN DE NUEVOS SOCIOS. Una fecha de baja con «Certificado devuelto» = Sí la manda al COE-03. Cuando el padrón esté completo, cambie «¿Usar el padrón…?» a «Sí» para que todo el archivo use este conteo.</p>
+      <section aria-labelledby="t-res" class="resumen-socios"><h2 id="t-res" class="vh">Resumen del padrón</h2>
+        <dl class="cifras">
+          <div><dt>Socios activos en el padrón</dt><dd>${calc('activos')}</dd></div>
+          <div><dt>No. de socios que usa el archivo</dt><dd>${calc('numSocios')}</dd></div>
+          <div><dt>Alumnos</dt><dd>${calc('alumnos')}</dd></div>
+          <div><dt>Maestros y empleados</dt><dd>${calc('maestros')}</dd></div>
+          <div><dt>Nuevos</dt><dd>${calc('nuevos')}</dd></div>
+          <div><dt>Bajas con certificado devuelto</dt><dd>${calc('bajas')}</dd></div>
+          <div><dt>Valor del certificado de aportación</dt><dd>${calc('certificado')}</dd></div>
+        </dl>
+        <div class="fila-dato">${usar}</div>
+        <p>${calc('textoUso')}</p><p>${calc('textoControl')}</p><p>${calc('avisoCertificado', '', 'alerta')}</p>
+      </section>
+      <section aria-labelledby="t-pad"><h2 id="t-pad">Padrón (${M.CAPACIDAD.socios} renglones)</h2>
+        <div class="tabla-desplazable"><table class="tabla padron"><thead><tr><th scope="col">No.</th>
+        ${COLUMNAS.map((c) => `<th scope="col">${c[1]}</th>`).join('')}<th scope="col">Control</th></tr></thead><tbody>${filas}</tbody></table></div>
+        ${Coop.app.botonAgregar('socios', n, lista.length)}</section>`;
+  }
+
+  function calculados(exp) {
+    const s = C.socios(exp);
+    const concepto = exp.catalogos.conceptos.find((x) => F.igual(x.concepto, 'APORTACIÓN DE SOCIO NUEVO'));
+    const out = {
+      activos: s.activos, alumnos: s.alumnos, maestros: s.maestrosEmpleados, nuevos: s.nuevos, bajas: s.bajasDevueltas,
+      numSocios: F.entero(F.N(C.numSocios(exp))), // la celda muestra 0 aunque el control 2 lo trate como vacío
+      certificado: F.moneda(s.valorCertificado),
+      textoUso: s.textoUso, textoControl: { t: s.textoControl, c: s.conObservacion ? 'alerta' : 'bien' },
+      avisoCertificado: concepto && F.vacio(concepto.importeRef)
+        ? 'El valor del certificado es $0.00 porque el concepto «APORTACIÓN DE SOCIO NUEVO» no tiene importe de referencia en CATÁLOGOS. Captúrelo ahí.' : '',
+    };
+    s.filas.forEach((f, i) => {
+      out[`soc.${i}.no`] = f.no;
+      out[`soc.${i}.control`] = { t: f.control, c: f.control ? 'alerta' : '' };
+    });
+    return out;
+  }
+
+  Coop.modulos.registrar({ id: 'socios', titulo: 'Socios', hoja: 'SOCIOS', grupo: 'Captura', render, calculados });
+})(globalThis.Coop = globalThis.Coop || {});
+</script>
+  <script>
+/* modulos/proveedores.js — PROVEEDORES: padrón de 15 proveedores (C7:L21) y estado de la carta compromiso (K). */
+(function (Coop) {
+  'use strict';
+  const { ui, calculos: C } = Coop;
+  const { campo, calc } = ui;
+
+  ui.registrarRegla(/^proveedores\.0\.fechaFirma$/, { propuesta: (exp) => C.propuestaFirmaCarta(exp) });
+
+  const celda = (i, k, etiqueta, exp, tipo = 'texto', opciones) => `<td>${campo({ ruta: `proveedores.${i}.${k}`, tipo, opciones, etiqueta: `Proveedor ${i + 1}: ${etiqueta}`, oculta: true }, exp)}</td>`;
+
+  function render(exp) {
+    const filas = exp.proveedores.map((p, i) => {
+      const fijos = i === 0
+        ? `<td>${calc('prov.0.nombre', '', 'gris')}</td>${celda(0, 'productos', 'productos que expende', exp)}`
+          + `<td>${calc('prov.0.domicilio', '', 'gris')}</td><td>${calc('prov.0.rfc', '', 'gris')}</td><td>${calc('prov.0.telefono', '', 'gris')}</td>`
+        : celda(i, 'nombre', 'nombre', exp) + celda(i, 'productos', 'productos que expende', exp)
+          + celda(i, 'domicilio', 'domicilio', exp) + celda(i, 'rfc', 'RFC', exp) + celda(i, 'telefono', 'teléfono', exp);
+      return `<tr><td class="num">${calc(`prov.${i}.no`)}</td>${fijos}`
+        + celda(i, 'ine', 'copia de INE al reverso', exp, 'lista', ['Sí', 'No', 'No aplica'])
+        + celda(i, 'fechaFirma', 'fecha de firma de la carta', exp, 'fecha')
+        + celda(i, 'vigencia', 'vigente hasta', exp, 'fecha')
+        + `<td>${calc(`prov.${i}.estado`)}</td>`
+        + celda(i, 'observaciones', 'observaciones', exp) + '</tr>';
+    }).join('');
+    return `
+      <p class="intro">El renglón 1 es el proveedor de alimentos de INGRESA DATOS (se cambia allá). Agregue al proveedor de agua y a cualquier otro. «Productos que expende» alimenta también el OFICIO DE PRODUCTOS.</p>
+      <section aria-labelledby="t-prov"><h2 id="t-prov">Padrón de proveedores</h2>
+        <div class="tabla-desplazable"><table class="tabla"><thead><tr><th scope="col">No.</th><th scope="col">Nombre del proveedor</th><th scope="col">Productos que expende</th>
+        <th scope="col">Domicilio</th><th scope="col">RFC</th><th scope="col">Teléfono</th><th scope="col">Copia de INE al reverso («No aplica» = compra comercial)</th>
+        <th scope="col">Fecha de firma de la carta</th><th scope="col">Vigente hasta (vacío = fin de ventas)</th><th scope="col">Estado</th><th scope="col">Observaciones</th></tr></thead>
+        <tbody>${filas}</tbody></table></div>
+        <p class="nota">Renglón 1 en gris: se captura en <a href="#/ciclo">INGRESA DATOS</a>. Fecha de firma: por omisión, la del acta de proveedores (puede escribir encima).</p></section>`;
+  }
+
+  function calculados(exp) {
+    const out = {};
+    C.proveedores(exp).forEach((p, i) => {
+      out[`prov.${i}.no`] = p.no;
+      out[`prov.${i}.estado`] = { t: p.estado, c: p.estado.startsWith('✔') ? 'bien' : (p.estado ? 'alerta' : '') };
+      if (i === 0) ['nombre', 'domicilio', 'rfc', 'telefono'].forEach((k) => { out[`prov.0.${k}`] = { t: p[k], c: 'gris' }; });
+    });
+    return out;
+  }
+
+  Coop.modulos.registrar({ id: 'proveedores', titulo: 'Proveedores', hoja: 'PROVEEDORES', grupo: 'Captura', render, calculados });
+})(globalThis.Coop = globalThis.Coop || {});
+</script>
+  <script>
+/* modulos/expedientes.js — Expedientes (un ciclo escolar cada uno) y respaldos. */
+(function (Coop) {
+  'use strict';
+  const { ui, modelo: M } = Coop;
+  const { esc } = ui;
+
+  const fechaHora = (iso) => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    const p = (n) => String(n).padStart(2, '0');
+    return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  };
+
+  const nombre = (e) => `${e.ciclo.ciclo || '(sin ciclo)'}${e.ciclo.escuela ? ' · ' + e.ciclo.escuela : ''}`;
+
+  function render(exp) {
+    const lista = Coop.app.expedientes().slice().sort((a, b) => String(b.modificado).localeCompare(String(a.modificado)));
+    const filas = lista.map((e) => `<tr${e.id === exp.id ? ' class="actual"' : ''}><td>${esc(nombre(e))}${e.id === exp.id ? ' <span class="estado bien">abierto</span>' : ''}</td>`
+      + `<td>${fechaHora(e.modificado)}</td><td class="acciones">`
+      + (e.id === exp.id ? '' : `<button type="button" data-accion="abrir" data-id="${e.id}">Abrir</button>`)
+      + `<button type="button" data-accion="duplicar" data-id="${e.id}">Duplicar como base del siguiente ciclo</button>`
+      + `<button type="button" class="peligro" data-accion="borrar" data-id="${e.id}">Borrar</button></td></tr>`).join('');
+    return `
+      <p class="intro">Cada ciclo escolar se trabaja en su propio expediente, igual que en el Excel se trabaja un archivo por ciclo. No capture dos ciclos en el mismo expediente.</p>
+      <section aria-labelledby="t-exp"><h2 id="t-exp">Expedientes guardados en este navegador</h2>
+        <div class="tabla-desplazable"><table class="tabla"><thead><tr><th scope="col">Ciclo y escuela</th><th scope="col">Última modificación</th><th scope="col">Acciones</th></tr></thead>
+        <tbody>${filas}</tbody></table></div>
+        <p><button type="button" data-accion="nuevo">Nuevo expediente (formato vacío 2026-2027)</button></p></section>
+      <section aria-labelledby="t-resp"><h2 id="t-resp">Respaldos</h2>
+        <p class="alerta-fija">Si borra los datos del navegador o cambia de equipo, perderá la información si no tiene respaldo.</p>
+        <p>Los datos se guardan solo en este navegador y en este equipo; no se envían a internet. Abra siempre la app desde el mismo archivo y la misma carpeta (o la misma dirección web): otro navegador, otra carpeta u otro equipo no ven estos datos. Guarde el respaldo en una memoria USB o en la nube al menos una vez por semana.</p>
+        <p>Último respaldo: <strong>${esc(Coop.app.ultimoRespaldo() ? fechaHora(Coop.app.ultimoRespaldo()) : 'nunca')}</strong> · Almacenamiento: ${esc(Coop.almacen.modo() === 'indexeddb' ? 'IndexedDB' : 'localStorage')}</p>
+        <p><button type="button" data-accion="exportar">Exportar respaldo (.json) de todos los expedientes</button>
+        <label class="boton-archivo">Importar respaldo (.json)<input type="file" accept=".json,application/json" data-accion-archivo="importar"></label></p></section>`;
+  }
+
+  async function duplicar({ id }) {
+    const origen = Coop.app.expedientes().find((e) => e.id === id);
+    const sugerido = M.siguienteCiclo(origen.ciclo.ciclo);
+    const casilla = (n, t, marcada = true) => `<label class="casilla"><input type="checkbox" name="${n}"${marcada ? ' checked' : ''}> ${esc(t)}</label>`;
+    const r = await ui.dialogo('Duplicar como base del siguiente ciclo',
+      `<p>Se crea un expediente nuevo a partir de «${esc(nombre(origen))}». Nunca se copian las fechas del ciclo, los días de clase, los periodos sin venta, el número de socios ni el efectivo anterior: se capturan para el ciclo nuevo.</p>
+       <p><label for="dup-ciclo">Ciclo escolar del nuevo expediente</label><br><input id="dup-ciclo" name="ciclo" value="${esc(sugerido)}" autocomplete="off"></p>
+       <fieldset><legend>Qué se copia</legend>
+       ${casilla('escuela', 'Datos de la escuela (escuela, CCT, cooperativa, clave, registro, ciudad y fotocopiadora)')}
+       ${casilla('mesa', 'Mesa directiva: los nombres de este ciclo pasan a la columna «Consejo saliente» y se conserva la Dirección')}
+       ${casilla('proveedorAlimentos', 'Proveedor de alimentos')}
+       ${casilla('catalogos', 'Catálogos (productos, historial de precios y conceptos)')}
+       ${casilla('proveedores', 'Proveedores (sin fecha de firma de carta)')}
+       ${casilla('socios', 'Padrón de socios (revise después altas, bajas y «¿Nuevo en este ciclo?»)', false)}
+       </fieldset>`,
+      [{ texto: 'Cancelar', valor: false }, { texto: 'Crear expediente', valor: true, clase: 'principal' }]);
+    if (!r.valor) return;
+    const nuevo = M.duplicarComoBase(origen, r.datos.ciclo.trim(), r.datos);
+    await Coop.app.agregarExpediente(nuevo);
+    ui.aviso(`Se creó el expediente ${nuevo.ciclo.ciclo || '(sin ciclo)'}. Capture sus fechas en Ingresa datos.`, 'bien');
+  }
+
+  async function borrar({ id }) {
+    const e = Coop.app.expedientes().find((x) => x.id === id);
+    const r = await ui.dialogo('Borrar expediente',
+      `<p>Se borrará <strong>${esc(nombre(e))}</strong> de este navegador. Esta acción no se puede deshacer.</p><p>Si no tiene un respaldo reciente, cancele y exporte uno primero.</p>`,
+      [{ texto: 'Cancelar', valor: false, clase: 'principal' }, { texto: 'Borrar definitivamente', valor: true, clase: 'peligro' }]);
+    if (r.valor) await Coop.app.borrarExpediente(id);
+  }
+
+  Coop.modulos.registrar({
+    id: 'expedientes', titulo: 'Expedientes y respaldos', grupo: 'Expediente', render,
+    calculados: () => ({}),
+    acciones: {
+      abrir: ({ id }) => Coop.app.abrirExpediente(id),
+      nuevo: () => Coop.app.agregarExpediente(M.crearExpediente(true)),
+      duplicar, borrar,
+      exportar: () => Coop.app.exportarRespaldo(),
+      importar: (archivo) => Coop.app.importarRespaldo(archivo),
+    },
+  });
+})(globalThis.Coop = globalThis.Coop || {});
+</script>
+  <script>
+/* app.js — Acceso, expedientes, navegación, guardado automático y respaldos. */
+(function (Coop) {
+  'use strict';
+  const { ui, almacen, modelo: M } = Coop;
+  const { esc } = ui;
+
+  const CLAVE = '0000'; // candado de cortesía: no cifra ni protege los datos
+  const PREF_ACTUAL = 'coop.expedienteActual';
+  const DIAS_RECORDATORIO = 7;
+
+  /* Menú agrupado como las pestañas del Excel. «fase» indica cuándo se construye lo que aún no existe. */
+  const MENU = [
+    ['Control', [['tablero', 'Tablero'], ['resumen', 'Resumen y controles', 4], ['cumplimiento', 'Cumplimiento', 4]]],
+    ['Captura', [['ciclo', 'Ingresa datos'], ['catalogos', 'Catálogos'], ['socios', 'Socios'], ['proveedores', 'Proveedores'],
+      ['semanal', 'Registro semanal', 2], ['agua', 'Notas de agua', 2], ['gastos', 'Registro de gastos', 2], ['actas', 'Captura actas', 3]]],
+    ['Actas', [['imprimirActa', 'Imprimir acta', 3], ['datosActas', 'Datos propios de cada acta', 3], ['ficha', 'Ficha del acta ordinaria', 3],
+      ['convocatoria', 'Convocatoria', 3], ['asistencia', 'Lista de asistencia', 3], ['nuevosSocios', 'Relación de nuevos socios', 3], ['carta', 'Carta compromiso', 3]]],
+    ['Contabilidad', [['libro', 'Libro contable', 2], ['ingresosEgresos', 'Ingresos y egresos', 2], ['recibos', 'Recibos', 2],
+      ['remision', 'Notas de remisión', 2], ['cortes', 'Cortes', 4], ['informe', 'Informe contable', 4]]],
+    ['Documentos', [['coe02', 'COE-02 Fondo repartible', 4], ['coe03', 'COE-03 Certificados devueltos', 4], ['coe04', 'COE-04 Concentrado', 4],
+      ['oficio', 'Oficio de productos', 4], ['inventario', 'Inventario de bienes', 4], ['traspaso', 'Traspaso al siguiente ciclo', 4]]],
+    ['Consulta', [['catalogoActas', 'Catálogo de actas', 3]]],
+    ['Expediente', [['expedientes', 'Expedientes y respaldos']]],
+  ];
+
+  const estado = { expedientes: [], exp: null, vista: {}, actual: 'tablero', ultimoRespaldo: null };
+  const $ = (s) => document.querySelector(s);
+
+  /* ---------- Acceso ---------- */
+  function mostrarAcceso() {
+    document.body.className = 'en-acceso';
+    $('#app').hidden = true;
+    $('#acceso').hidden = false;
+    const campo = $('#clave');
+    campo.value = '';
+    campo.focus();
+  }
+
+  async function entrar() {
+    document.body.className = '';
+    $('#acceso').hidden = true;
+    $('#app').hidden = false;
+    try {
+      await almacen.iniciar();
+    } catch (e) {
+      $('#contenido').innerHTML = `<p class="alerta-fija">Este navegador no permite guardar datos (${esc(e.message)}). Use una ventana normal (no privada) de Chrome, Edge o Firefox.</p>`;
+      return;
+    }
+    const guardados = await almacen.listar();
+    estado.expedientes = [];
+    for (const g of guardados) {
+      try { estado.expedientes.push(M.migrar(g)); } catch (e) { ui.aviso(e.message, 'mal'); }
+    }
+    if (estado.expedientes.length === 0) {
+      const nuevo = M.crearExpediente(true);
+      await almacen.guardar(nuevo);
+      estado.expedientes.push(nuevo);
+    }
+    let preferido = null;
+    try { preferido = localStorage.getItem(PREF_ACTUAL); } catch (e) { preferido = null; }
+    estado.exp = estado.expedientes.find((e) => e.id === preferido)
+      || estado.expedientes.slice().sort((a, b) => String(b.modificado).localeCompare(String(a.modificado)))[0];
+    estado.ultimoRespaldo = (await almacen.leerMeta('ultimoRespaldo')) || null;
+    dibujarMenu();
+    dibujarSelector();
+    revisarRecordatorio();
+    irA(location.hash.replace(/^#\/?/, '') || 'tablero');
+  }
+
+  /* ---------- Menú y selector de expediente ---------- */
+  function dibujarMenu() {
+    $('#menu').innerHTML = MENU.map(([grupo, items]) => `<div class="grupo"><h2>${esc(grupo)}</h2><ul>`
+      + items.map(([id, titulo, fase]) => (Coop.modulos.obtener(id)
+        ? `<li><a href="#/${id}" data-id="${id}">${esc(titulo)}</a></li>`
+        : `<li><span class="pendiente-fase" title="Se construye en la Fase ${fase}">${esc(titulo)} <small>Fase ${fase}</small></span></li>`)).join('')
+      + '</ul></div>').join('');
+  }
+
+  function dibujarSelector() {
+    const sel = $('#selector-exp');
+    sel.innerHTML = estado.expedientes.map((e) => `<option value="${e.id}"${e.id === estado.exp.id ? ' selected' : ''}>`
+      + `${esc(e.ciclo.ciclo || '(sin ciclo)')}${e.ciclo.escuela ? ' · ' + esc(e.ciclo.escuela) : ''}</option>`).join('');
+  }
+
+  /* ---------- Pantallas ---------- */
+  function irA(id) {
+    if (!Coop.modulos.obtener(id)) id = 'tablero';
+    if (location.hash !== '#/' + id) { location.hash = '#/' + id; return; }
+    estado.actual = id;
+    dibujarPantalla();
+    window.scrollTo(0, 0);
+    $('#contenido').focus({ preventScroll: true });
+  }
+
+  function dibujarPantalla() {
+    const m = Coop.modulos.obtener(estado.actual);
+    document.querySelectorAll('#menu a').forEach((a) => a.toggleAttribute('aria-current', a.dataset.id === m.id));
+    document.title = `${m.titulo} · Control de Cooperativas Escolares`;
+    const hoja = m.hoja ? `<span class="hoja-excel">Hoja del Excel: ${esc(m.hoja)}</span>` : '';
+    $('#contenido').innerHTML = `<h1>${esc(m.titulo)}</h1>${hoja}${m.render(estado.exp)}`;
+    refrescar();
+  }
+
+  function refrescar() {
+    const m = Coop.modulos.obtener(estado.actual);
+    const raiz = $('#contenido');
+    ui.refrescarCalculados(raiz, m.calculados(estado.exp));
+    ui.revisarCampos(raiz, estado.exp);
+  }
+
+  /* Vuelve a dibujar la pantalla conservando el campo con el foco y la posición. */
+  function redibujar() {
+    const activo = document.activeElement;
+    const ruta = activo && activo.dataset ? activo.dataset.ruta : null;
+    const pos = activo && typeof activo.selectionStart === 'number' ? activo.selectionStart : null;
+    const y = window.scrollY;
+    dibujarPantalla();
+    window.scrollTo(0, y);
+    if (ruta) {
+      const el = document.querySelector(`#contenido [data-ruta="${CSS.escape(ruta)}"]`);
+      if (el) { el.focus({ preventScroll: true }); if (pos !== null && el.setSelectionRange) el.setSelectionRange(pos, pos); }
+    }
+  }
+
+  /* Cuántos renglones de una tabla se muestran: los capturados más «extra» vacíos, más los que se pidan. */
+  function filasVisibles(clave, lista, esVacio, extra) {
+    let ultimo = -1;
+    lista.forEach((r, i) => { if (!esVacio(r)) ultimo = i; });
+    const base = Math.max(ultimo + 1 + extra, 10) + (estado.vista[clave] || 0);
+    return Math.min(base, lista.length);
+  }
+
+  const botonAgregar = (clave, n, total) => (n < total
+    ? `<p><button type="button" data-agregar="${clave}">Mostrar 10 renglones más</button> <span class="nota">(${n} de ${total})</span></p>`
+    : `<p class="nota">Se muestran los ${total} renglones disponibles.</p>`);
+
+  /* ---------- Guardado ---------- */
+  async function guardar() {
+    const ind = $('#guardado');
+    estado.exp.modificado = new Date().toISOString();
+    ind.textContent = 'Guardando…';
+    ind.className = 'guardando';
+    try {
+      await almacen.guardar(estado.exp);
+      const h = new Date();
+      ind.textContent = `Guardado ✓ ${String(h.getHours()).padStart(2, '0')}:${String(h.getMinutes()).padStart(2, '0')}`;
+      ind.className = 'guardado';
+      revisarRecordatorio();
+    } catch (e) {
+      ind.textContent = 'No se pudo guardar';
+      ind.className = 'error';
+      ui.aviso(`No se pudo guardar: ${e.message}. Exporte un respaldo ahora.`, 'mal');
+    }
+  }
+
+  async function cambiarExpediente(exp) {
+    estado.exp = exp;
+    try { localStorage.setItem(PREF_ACTUAL, exp.id); } catch (e) { /* preferencia opcional */ }
+    estado.vista = {};
+    dibujarSelector();
+    dibujarPantalla();
+  }
+
+  /* ---------- Respaldos ---------- */
+  function revisarRecordatorio() {
+    const banda = $('#recordatorio');
+    const ultimo = estado.ultimoRespaldo ? new Date(estado.ultimoRespaldo) : null;
+    const cambiosDespues = estado.expedientes.some((e) => !ultimo || new Date(e.modificado) > ultimo);
+    const dias = ultimo ? Math.floor((Date.now() - ultimo.getTime()) / 86400000) : null;
+    const toca = cambiosDespues && (dias === null || dias >= DIAS_RECORDATORIO)
+      && estado.expedientes.some((e) => e.modificado !== e.creado);
+    banda.hidden = !toca;
+    if (toca) {
+      banda.innerHTML = `<span>${dias === null ? 'Todavía no ha hecho ningún respaldo.' : `Han pasado ${dias} días desde su último respaldo.`}`
+        + ' Si borra los datos del navegador o cambia de equipo, perderá la información si no tiene respaldo.</span>'
+        + ' <button type="button" data-global="exportar">Hacer respaldo ahora</button>';
+    }
+  }
+
+  async function exportarRespaldo() {
+    await almacen.guardar(estado.exp);
+    const datos = almacen.armarRespaldo(await almacen.listar());
+    const blob = new Blob([JSON.stringify(datos, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = almacen.nombreRespaldo();
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    estado.ultimoRespaldo = new Date().toISOString();
+    await almacen.guardarMeta('ultimoRespaldo', estado.ultimoRespaldo);
+    revisarRecordatorio();
+    ui.aviso(`Respaldo descargado: ${a.download}. Guárdelo fuera de este equipo.`, 'bien');
+    if (estado.actual === 'expedientes') dibujarPantalla();
+  }
+
+  async function importarRespaldo(archivo) {
+    let paquete;
+    try {
+      paquete = almacen.interpretarRespaldo(await archivo.text());
+    } catch (e) {
+      await ui.dialogo('No se pudo importar', `<p>${esc(e.message)}</p>`, [{ texto: 'Entendido', valor: true, clase: 'principal' }]);
+      return;
+    }
+    const filas = paquete.expedientes.map((e) => {
+      const existe = estado.expedientes.find((x) => x.id === e.id);
+      return `<li><strong>${esc(e.ciclo.ciclo || '(sin ciclo)')}${e.ciclo.escuela ? ' · ' + esc(e.ciclo.escuela) : ''}</strong> — `
+        + `${e.socios.lista.filter((s) => s.nombre !== '').length} socios en el padrón, `
+        + `${e.catalogos.historial.filter((h) => h.producto !== '').length} precios en el historial. `
+        + (existe ? '<span class="estado mal">Reemplaza al expediente que ya existe en este navegador</span>' : '<span class="estado bien">Nuevo</span>')
+        + '</li>';
+    }).join('');
+    const r = await ui.dialogo('Importar respaldo',
+      `<p>Respaldo exportado el ${esc(paquete.exportado ? new Date(paquete.exportado).toLocaleString('es-MX') : '(fecha desconocida)')}. Contiene:</p><ul>${filas}</ul>`
+      + '<p>Los expedientes marcados en rojo se sobrescribirán con la versión del respaldo. Los demás expedientes de este navegador no cambian.</p>',
+      [{ texto: 'Cancelar', valor: false }, { texto: 'Importar', valor: true, clase: 'principal' }]);
+    if (!r.valor) return;
+    for (const e of paquete.expedientes) {
+      await almacen.guardar(e);
+      const i = estado.expedientes.findIndex((x) => x.id === e.id);
+      if (i >= 0) estado.expedientes[i] = e; else estado.expedientes.push(e);
+    }
+    const actual = estado.expedientes.find((x) => x.id === estado.exp.id) || paquete.expedientes[0];
+    await cambiarExpediente(actual);
+    ui.aviso(`Se importaron ${paquete.expedientes.length} expediente(s).`, 'bien');
+  }
+
+  /* ---------- Expedientes ---------- */
+  async function agregarExpediente(exp) {
+    await almacen.guardar(exp);
+    estado.expedientes.push(exp);
+    await cambiarExpediente(exp);
+  }
+
+  async function borrarExpediente(id) {
+    await almacen.borrar(id);
+    estado.expedientes = estado.expedientes.filter((e) => e.id !== id);
+    if (estado.expedientes.length === 0) {
+      const nuevo = M.crearExpediente(true);
+      await almacen.guardar(nuevo);
+      estado.expedientes.push(nuevo);
+    }
+    const siguiente = estado.exp.id === id ? estado.expedientes[0] : estado.exp;
+    await cambiarExpediente(siguiente);
+    ui.aviso('Expediente borrado.', 'info');
+  }
+
+  /* ---------- Eventos ---------- */
+  function cerrarMenu() {
+    document.body.classList.remove('menu-abierto');
+    $('#boton-menu').setAttribute('aria-expanded', 'false');
+  }
+
+  function conectar() {
+    $('#form-acceso').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if ($('#clave').value === CLAVE) {
+        sessionStorage.setItem('coop.sesion', 'abierta');
+        $('#error-clave').textContent = '';
+        entrar();
+      } else {
+        $('#error-clave').textContent = 'Contraseña incorrecta.';
+        $('#clave').select();
+      }
+    });
+    $('#salir').addEventListener('click', () => { sessionStorage.removeItem('coop.sesion'); mostrarAcceso(); });
+    $('#selector-exp').addEventListener('change', (e) => cambiarExpediente(estado.expedientes.find((x) => x.id === e.target.value)));
+    $('#boton-menu').addEventListener('click', () => {
+      const abierto = document.body.classList.toggle('menu-abierto');
+      $('#boton-menu').setAttribute('aria-expanded', String(abierto));
+    });
+    $('#menu').addEventListener('click', (e) => { if (e.target.closest('a')) cerrarMenu(); });
+    window.addEventListener('hashchange', () => irA(location.hash.replace(/^#\/?/, '')));
+
+    const contenido = $('#contenido');
+    contenido.addEventListener('change', async (e) => {
+      const el = e.target;
+      if (el.dataset.accionArchivo) {
+        const m = Coop.modulos.obtener(estado.actual);
+        if (el.files[0]) await m.acciones[el.dataset.accionArchivo](el.files[0]);
+        el.value = '';
+        return;
+      }
+      if (!el.dataset.ruta) return;
+      if (!ui.procesarCambio(el, estado.exp)) return;
+      await guardar();
+      const m = Coop.modulos.obtener(estado.actual);
+      if (m.redibujarSi && m.redibujarSi.test(el.dataset.ruta)) setTimeout(redibujar, 0);
+      else refrescar();
+      if (el.dataset.ruta === 'ciclo.ciclo' || el.dataset.ruta === 'ciclo.escuela') dibujarSelector();
+    });
+    contenido.addEventListener('click', async (e) => {
+      const r = e.target.closest('[data-restablecer]');
+      if (r) { ui.restablecer(r, estado.exp); await guardar(); refrescar(); return; }
+      const ag = e.target.closest('[data-agregar]');
+      if (ag) { estado.vista[ag.dataset.agregar] = (estado.vista[ag.dataset.agregar] || 0) + 10; redibujar(); return; }
+      const ac = e.target.closest('[data-accion]');
+      if (ac) await Coop.modulos.obtener(estado.actual).acciones[ac.dataset.accion](ac.dataset);
+    });
+    document.addEventListener('click', (e) => {
+      const g = e.target.closest('[data-global]');
+      if (g && g.dataset.global === 'exportar') exportarRespaldo();
+      if (document.body.classList.contains('menu-abierto') && !e.target.closest('#menu, #boton-menu')) cerrarMenu();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.classList.contains('menu-abierto')) cerrarMenu(); });
+  }
+
+  Coop.app = {
+    filasVisibles, botonAgregar, exportarRespaldo, importarRespaldo, agregarExpediente, borrarExpediente,
+    abrirExpediente: (id) => cambiarExpediente(estado.expedientes.find((e) => e.id === id)),
+    expedientes: () => estado.expedientes,
+    ultimoRespaldo: () => estado.ultimoRespaldo,
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    conectar();
+    if (sessionStorage.getItem('coop.sesion') === 'abierta') entrar(); else mostrarAcceso();
+  });
+})(globalThis.Coop = globalThis.Coop || {});
+</script>
+</body>
+</html>

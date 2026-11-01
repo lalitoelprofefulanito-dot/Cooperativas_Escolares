@@ -1,0 +1,176 @@
+/* estilos.css — Interfaz de la app. Código de colores del Excel: amarillo = captura;
+   verde / rojo = estado de los controles; los datos calculados se ven como texto, sin cuadro. */
+:root {
+  --fondo: #f4f5f2;
+  --superficie: #ffffff;
+  --texto: #1d2420;
+  --texto-suave: #55605a;
+  --borde: #c9cfca;
+  --acento: #1f5f4a;
+  --acento-texto: #ffffff;
+  --captura: #fff4cc;          /* amarillo de las celdas de captura del Excel */
+  --captura-borde: #c9a93a;
+  --propuesto: #7a7a7a;        /* valor propuesto, en gris */
+  --ok-fondo: #c6efce; --ok-texto: #0b5a1c;
+  --mal-fondo: #ffc7ce; --mal-texto: #9c0006;
+  --pend-fondo: #ffeb9c; --pend-texto: #7a5300;
+  --info-fondo: #dde8f3; --info-texto: #1f4e79;
+  --aviso: #c55a11;            /* naranja: dato fuera de la regla del Excel */
+  --error: #b00020;
+  --g-control: #c00000; --g-captura: #b37200; --g-actas: #0f6e6a; --g-contab: #006600;
+  --g-docs: #1f4e79; --g-consulta: #6b6b6b; --g-exp: #444;
+  --radio: 6px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  color: var(--texto);
+  background: var(--fondo);
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--fondo); line-height: 1.45; }
+.vh { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+a { color: var(--acento); }
+:focus-visible { outline: 3px solid #2a7ab8; outline-offset: 2px; }
+button, .boton-archivo {
+  font: inherit; padding: 6px 12px; border: 1px solid var(--borde); border-radius: var(--radio);
+  background: var(--superficie); color: var(--texto); cursor: pointer; min-height: 34px;
+}
+button:hover, .boton-archivo:hover { border-color: var(--acento); }
+button.principal { background: var(--acento); color: var(--acento-texto); border-color: var(--acento); }
+button.peligro { color: var(--error); border-color: #e3a6ae; }
+.boton-archivo { display: inline-flex; align-items: center; margin-left: 8px; }
+.boton-archivo input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.boton-archivo:focus-within { outline: 3px solid #2a7ab8; }
+
+/* ---------- Acceso ---------- */
+.acceso { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+.tarjeta-acceso { background: var(--superficie); border: 1px solid var(--borde); border-radius: 10px; padding: 28px; width: min(420px, 100%); }
+.tarjeta-acceso h1 { font-size: 1.35rem; margin: 0 0 4px; }
+.tarjeta-acceso .subtitulo { color: var(--texto-suave); margin: 0 0 20px; }
+.tarjeta-acceso label { display: block; font-weight: 600; margin-bottom: 4px; }
+.tarjeta-acceso input { font-size: 1.6rem; letter-spacing: .5em; width: 8.5ch; padding: 6px 10px; background: var(--captura); border: 1px solid var(--captura-borde); border-radius: var(--radio); }
+.tarjeta-acceso button { margin: 8px 0 16px; width: 100%; }
+
+/* ---------- Estructura ---------- */
+.barra { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+  padding: 8px 16px; background: #1f2d27; color: #fff; }
+.barra .marca { font-weight: 700; }
+.barra select { max-width: 340px; min-width: 0; flex: 1 1 180px; font: inherit; padding: 4px 6px; border-radius: var(--radio); }
+.barra button { background: transparent; color: #fff; border-color: #6c7f76; }
+.enlace-barra { color: #fff; }
+#guardado { margin-left: auto; font-size: .9rem; }
+#guardado.guardado { color: #a8e6b8; }
+#guardado.error { color: #ffb3bd; font-weight: 700; }
+.boton-menu { display: none; }
+.recordatorio { background: var(--pend-fondo); color: var(--pend-texto); padding: 8px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.cuerpo { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: calc(100vh - 100px); }
+.menu { background: var(--superficie); border-right: 1px solid var(--borde); padding: 8px 0 24px; overflow-y: auto;
+  position: sticky; top: 52px; height: calc(100vh - 52px); align-self: start; }
+.menu .grupo h2 { font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; margin: 14px 16px 4px; padding-left: 8px; border-left: 4px solid; }
+.menu .grupo:nth-child(1) h2 { border-color: var(--g-control); }
+.menu .grupo:nth-child(2) h2 { border-color: var(--g-captura); }
+.menu .grupo:nth-child(3) h2 { border-color: var(--g-actas); }
+.menu .grupo:nth-child(4) h2 { border-color: var(--g-contab); }
+.menu .grupo:nth-child(5) h2 { border-color: var(--g-docs); }
+.menu .grupo:nth-child(6) h2 { border-color: var(--g-consulta); }
+.menu .grupo:nth-child(7) h2 { border-color: var(--g-exp); }
+.menu ul { list-style: none; margin: 0; padding: 0; }
+.menu a, .menu .pendiente-fase { display: flex; justify-content: space-between; gap: 6px; padding: 5px 12px 5px 28px; text-decoration: none; color: var(--texto); }
+.menu .pendiente-fase small { white-space: nowrap; align-self: center; }
+.menu a:hover { background: #eef2ee; }
+.menu a[aria-current] { background: #e2ece6; font-weight: 700; box-shadow: inset 3px 0 0 var(--acento); }
+.menu .pendiente-fase { color: #8a918d; cursor: default; }
+.menu .pendiente-fase small { font-size: .72rem; border: 1px solid #c7ccc8; border-radius: 4px; padding: 0 4px; margin-left: 4px; }
+.contenido { padding: 20px 24px 48px; min-width: 0; outline: none; }
+.contenido h1 { margin: 0; font-size: 1.5rem; }
+.hoja-excel { display: inline-block; color: var(--texto-suave); font-size: .85rem; margin-bottom: 8px; }
+.contenido h2 { font-size: 1.1rem; margin: 14px 0 8px; }
+.intro { max-width: 80ch; }
+.nota, .ayuda { color: var(--texto-suave); font-size: .88rem; }
+.pie { padding: 8px 16px; color: var(--texto-suave); font-size: .85rem; border-top: 1px solid var(--borde); background: var(--superficie); }
+section { background: var(--superficie); border: 1px solid var(--borde); border-radius: 8px; padding: 4px 16px 14px; margin-top: 16px; }
+
+/* ---------- Campos ---------- */
+.campo { display: flex; flex-direction: column; gap: 2px; min-width: 0; position: relative; }
+.campo > label { font-weight: 600; font-size: .92rem; }
+.control { display: flex; align-items: center; gap: 4px; }
+.campo input, .campo select {
+  font: inherit; width: 100%; min-width: 7ch; padding: 4px 6px; background: var(--captura);
+  border: 1px solid var(--captura-borde); border-radius: 4px; color: var(--texto);
+}
+.campo input.propuesto { color: var(--propuesto); font-style: italic; }
+.campo .aviso { border: 2px solid var(--aviso); }
+.campo .error { border: 2px solid var(--error); }
+.msg { font-size: .82rem; }
+.msg:empty { display: none; }
+.msg.aviso { color: var(--aviso); }
+.msg.error { color: var(--error); font-weight: 600; }
+.restablecer { min-height: 28px; padding: 0 8px; font-size: 1rem; line-height: 1; }
+.rejilla-datos { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px 20px; }
+.fila-dato { display: flex; flex-direction: column; gap: 4px; }
+.ancho-l input { min-width: 22ch; }
+
+/* ---------- Datos calculados (texto sin cuadro) ---------- */
+.calc { white-space: pre-wrap; }
+.calc.alerta, .alerta { color: var(--error); }
+.calc.bien { color: var(--ok-texto); }
+.calc.gris { color: var(--texto-suave); }
+.calc:empty { display: none; }
+.alerta-fija { background: var(--pend-fondo); color: var(--pend-texto); padding: 8px 12px; border-radius: var(--radio); }
+.estado { display: inline-block; padding: 1px 8px; border-radius: 10px; font-weight: 700; font-size: .82rem; }
+.estado.bien { background: var(--ok-fondo); color: var(--ok-texto); }
+.estado.mal { background: var(--mal-fondo); color: var(--mal-texto); }
+.estado.pendiente { background: var(--pend-fondo); color: var(--pend-texto); }
+.estado.info { background: var(--info-fondo); color: var(--info-texto); }
+.origen { display: block; font-size: .75rem; color: var(--texto-suave); }
+.leyenda { background: #f8cbad; color: #c00000; padding: 6px 10px; display: inline-block; }
+.cifras { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin: 12px 0; }
+.cifras div { border: 1px solid var(--borde); border-radius: var(--radio); padding: 8px 10px; }
+.cifras dt { font-size: .8rem; color: var(--texto-suave); }
+.cifras dd { margin: 0; font-size: 1.25rem; font-weight: 700; }
+
+/* ---------- Tablas ---------- */
+.tabla-desplazable { overflow-x: auto; max-width: 100%; position: relative; }
+.tabla { border-collapse: collapse; width: 100%; font-size: .9rem; }
+.tabla th, .tabla td { border: 1px solid #dfe3df; padding: 3px 5px; vertical-align: top; text-align: left; }
+.tabla thead th { background: #eef1ee; position: sticky; top: 0; font-size: .82rem; }
+.tabla td.num { text-align: right; white-space: nowrap; }
+.tabla tr.fijo td { background: #f2f2f2; color: var(--texto-suave); }
+.tabla tr.actual td { background: #f1f8f3; }
+.tabla td.acciones { display: flex; flex-wrap: wrap; gap: 6px; }
+.tabla.compacta { width: auto; }
+.calendario td { white-space: nowrap; }
+.calendario .dia-venta { color: var(--ok-texto); text-align: center; }
+.calendario .dia-sin { background: repeating-linear-gradient(135deg, #f1f1f1 0 6px, #dcdcdc 6px 8px); color: #555; font-size: .75rem; max-width: 10ch; overflow: hidden; text-overflow: ellipsis; }
+.calendario .sin-semana td { color: #aaa; }
+.totales { font-weight: 600; }
+.padron td { min-width: 7ch; }
+
+/* ---------- Diálogos y avisos ---------- */
+.dialogo { border: 1px solid var(--borde); border-radius: 10px; padding: 20px; width: min(620px, calc(100vw - 32px)); }
+.dialogo::backdrop { background: rgba(0, 0, 0, .35); }
+.dialogo h2 { margin-top: 0; font-size: 1.2rem; }
+.dlg-botones { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.dialogo fieldset { border: 1px solid var(--borde); border-radius: var(--radio); }
+.casilla { display: block; margin: 6px 0; }
+.dialogo input[name="ciclo"] { font: inherit; padding: 4px 6px; background: var(--captura); border: 1px solid var(--captura-borde); }
+.avisos-flotantes { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 50; max-width: min(420px, calc(100vw - 32px)); }
+.flotante { padding: 10px 14px; border-radius: var(--radio); background: #263238; color: #fff; box-shadow: 0 4px 14px rgba(0, 0, 0, .2); }
+.flotante.bien { background: #1e5e33; }
+.flotante.mal { background: #8c1d18; }
+
+/* ---------- Pantallas angostas (tableta vertical y teléfono) ---------- */
+@media (max-width: 900px) {
+  .boton-menu { display: inline-block; }
+  .cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .menu { position: fixed; top: 0; left: 0; bottom: 0; height: 100vh; width: min(300px, 85vw); z-index: 30; transform: translateX(-100%); transition: transform .2s; box-shadow: 4px 0 16px rgba(0,0,0,.2); }
+  .menu-abierto .menu { transform: none; }
+  .contenido { padding: 16px; }
+  .barra .marca { display: none; }
+  #guardado { margin-left: 0; }
+}
+
+@media print {
+  .barra, .menu, .pie, .recordatorio, .avisos-flotantes { display: none !important; }
+  .cuerpo { display: block; }
+}
